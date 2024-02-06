@@ -504,11 +504,6 @@ CLASS YCL_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
                                                      customizing_name = yif_trm_transport_request_db=>c_customizing-rfc_to_quality_name ).
     ENDIF.
 
-    IF rs_customizing-request_target_system_dev IS INITIAL.
-      RAISE EXCEPTION NEW ycx_trm_transport_request( textid = ycx_trm_transport_request=>customizing_missing_in_stvarvc
-                                                     customizing_name = yif_trm_transport_request_db=>c_customizing-request_target_dev_name ).
-    ENDIF.
-
   ENDMETHOD.
 
 
@@ -603,6 +598,7 @@ CLASS YCL_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
   METHOD clear_cache.
     get_db_interface(  )->clear_cache(  ).
   ENDMETHOD.
+
 
   METHOD yif_trm_transport_request~delete_entry.
 

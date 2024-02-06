@@ -129,9 +129,9 @@ INTERFACE yif_trm_transport_request_db
 
   CONSTANTS:
     BEGIN OF c_customizing,
-      rfc_to_quality_name         TYPE tvarvc-name VALUE 'ZTRM_RFC_QUALITY',
-      rfc_to_productive_name      TYPE tvarvc-name VALUE 'ZTRM_RFC_PRODUCTIVE',
-      request_target_quality_name TYPE tvarvc-name VALUE 'ZTRM_REQUEST_TARGET_QUALITY',
+      rfc_to_quality_name         TYPE tvarvc-name VALUE 'YTRM_RFC_QUALITY',
+      rfc_to_productive_name      TYPE tvarvc-name VALUE 'YTRM_RFC_PRODUCTIVE',
+      request_target_quality_name TYPE tvarvc-name VALUE 'YTRM_REQUEST_TARGET_QUALITY',
       request_target_dev_name     TYPE tvarvc-name VALUE 'ZTRM_REQUEST_TARGET_DEV',
     END OF c_customizing .
 
