@@ -21,7 +21,8 @@ CLASS lcl_utils IMPLEMENTATION.
   METHOD navigate_to_request.
 
     DATA: ls_rseumod     TYPE rseumod,
-          ls_old_rseumod TYPE rseumod.
+          ls_old_rseumod TYPE rseumod,
+          lt_param       TYPE STANDARD TABLE OF rfc_spagpa WITH DEFAULT KEY.
 
     CALL FUNCTION 'RS_WORKBENCH_CUSTOMIZING'
       EXPORTING
@@ -33,7 +34,7 @@ CLASS lcl_utils IMPLEMENTATION.
 
     UPDATE rseumod FROM ls_rseumod.
 
-    DATA(lt_param) = VALUE rfc_t_spagpa( ( parid = 'KOR' parval = iv_request ) ).
+    lt_param = VALUE #( ( parid = 'KOR' parval = iv_request ) ).
 
     CALL FUNCTION 'ABAP4_CALL_TRANSACTION' STARTING NEW TASK 'TEST'
       EXPORTING
