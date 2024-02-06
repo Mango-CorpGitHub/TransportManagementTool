@@ -29,10 +29,9 @@ Once decisions are made, the 'Release' button releases all transport requests.
 
 ## Configuration
 Configure the following variables in transaction STVARV:
-- ZTRM_REQUEST_TARGET_DEV: System Identifier and Client for the Development system.
-- ZTRM_REQUEST_TARGET_QUALITY: System Identifier and Client for the Quality system.
-- ZTRM_RFC_PRODUCTIVE: Trusted RFC against the Productive system.
-- ZTRM_RFC_QUALITY: Trusted RFC against the Quality system.
+- YTRM_REQUEST_TARGET_QUALITY: System Identifier and Client for the Quality system in format "SYS.CLI".
+- YTRM_RFC_PRODUCTIVE: Trusted RFC against the Productive system with current user.
+- YTRM_RFC_QUALITY: Trusted RFC against the Quality system with current user.
 
 ## Best Practices
 To ensure proper functioning:
