@@ -314,11 +314,10 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
     DATA lt_texts TYPE STANDARD TABLE OF yc_transportrequesttext WITH DEFAULT KEY
                                                                  WITH NON-UNIQUE SORTED KEY sorted_key COMPONENTS transportrequestid.
 
-    SELECT
-           trtext~*
+    SELECT trtext~*
       FROM yc_transportrequesttext AS trtext
-      JOIN @im_t_transport_request AS key
-        ON trtext~transportrequestid = key~code
+       FOR ALL ENTRIES IN @im_t_transport_request
+     WHERE trtext~transportrequestid = @im_t_transport_request-code
       INTO TABLE @lt_texts.
 
     re_t_text = VALUE #( FOR <tr> IN im_t_transport_request ( code  = <tr>-code
@@ -364,13 +363,14 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
 
     DATA lt_code TYPE yif_trm_transport_request_db~typ_t_code.
 
-    SELECT key~code
-      FROM yc_transportrequest     AS tr
-      JOIN @im_t_transport_request AS key ON tr~transportrequestid = key~code
+    SELECT tr~TransportRequestId AS code
+      FROM yc_transportrequest AS tr
+       FOR ALL ENTRIES IN @im_t_transport_request
+     WHERE tr~TransportRequestId EQ @im_t_transport_request-code
       INTO TABLE @lt_code.
 
     re_t_exists = VALUE #( FOR <tr> IN im_t_transport_request ( code   = <tr>-code
-                                                               exists = COND #( WHEN line_exists( lt_code[ KEY sorted_key code = <tr>-code ] )
+                                                                exists = COND #( WHEN line_exists( lt_code[ KEY sorted_key code = <tr>-code ] )
                                                                                 THEN abap_true
                                                                                 ELSE abap_false
                                                                                )
@@ -418,7 +418,8 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
 
     SELECT trentries~*
       FROM yc_transportrequestobject AS trentries
-      JOIN @im_t_transport_request AS key ON trentries~transportrequestid = key~code
+       FOR ALL ENTRIES IN @im_t_transport_request
+     WHERE trentries~transportrequestid = @im_t_transport_request-code
       INTO TABLE @lt_entries.
 
     re_t_entries = VALUE #( FOR <tr> IN im_t_transport_request ( code    = <tr>-code
@@ -460,7 +461,8 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
 
     SELECT tr~*
       FROM yc_transportrequest     AS tr
-      JOIN @im_t_transport_request AS key ON tr~transportrequestid = key~code
+       FOR ALL ENTRIES IN @im_t_transport_request
+     WHERE tr~transportrequestid = @im_t_transport_request-code
       INTO TABLE @DATA(lt_data).
 
     re_t_data = VALUE #( FOR <data> IN lt_data ( code = <data>-transportrequestid
@@ -505,7 +507,8 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
 
     SELECT trcustoentries~*
       FROM yc_transportrequestobjectcusto AS trcustoentries
-      JOIN @im_t_transport_request AS key ON trcustoentries~transportrequestid = key~code
+       for all entries in @im_t_transport_request
+     where trcustoentries~transportrequestid = @im_t_transport_request-code
       INTO TABLE @lt_entries.
 
     re_t_custo_entries = VALUE #( FOR <tr> IN im_t_transport_request ( code    = <tr>-code

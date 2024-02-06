@@ -395,7 +395,6 @@ CLASS YCL_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
                                         mastertype = custo->get_master_type( )
                                         mastername = custo->get_master_name( )
                                         viewname   = custo->get_view_name( )
-*                                        OBJFUNC    = custo->get_
                                         tabkey     = custo->get_tab_key(  )
                                         sortflag   = custo->get_sort_flag( )
                                         flag       = custo->get_flag( )
@@ -440,6 +439,7 @@ CLASS YCL_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
         RETURN.
       ELSE.
         ai_o_log->warning( |The following objects has not been added to Transport Request| ).
+
         LOOP AT lt_trmess_int ASSIGNING FIELD-SYMBOL(<ls_trmess_int>).
 
           ai_o_log->warning( |{ <ls_trmess_int>-msgv1 } / { <ls_trmess_int>-msgv2 } / { <ls_trmess_int>-msgv3 }| ).

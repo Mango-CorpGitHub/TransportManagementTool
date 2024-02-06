@@ -355,7 +355,7 @@ CLASS lcl_selected_transport_request IMPLEMENTATION.
        ) ).
 
     IF lines( gt_request_data ) = 0.
-      MESSAGE 'No transport request selected' TYPE 'S' DISPLAY LIKE 'E'.
+      MESSAGE s005(ytrm) DISPLAY LIKE 'E'.
       RETURN.
     ENDIF.
 
@@ -703,7 +703,7 @@ CLASS lcl_app IMPLEMENTATION.
 
         ELSE.
 
-          MESSAGE 'Select only one object' TYPE 'S' DISPLAY LIKE 'E'.
+          MESSAGE s006(ytrm) DISPLAY LIKE 'E'.
           RETURN.
 
         ENDIF.
@@ -715,7 +715,7 @@ CLASS lcl_app IMPLEMENTATION.
         _clean( ).
 
       WHEN OTHERS.
-        MESSAGE |Function { e_salv_function } not implemented| TYPE 'S' DISPLAY LIKE 'E'.
+        MESSAGE s007(ytrm) WITH e_salv_function DISPLAY LIKE 'E'.
     ENDCASE.
 
 
@@ -741,22 +741,22 @@ CLASS lcl_app IMPLEMENTATION.
 
     DATA(lt_selected_lines) = alv->get_selections( )->get_selected_rows( ).
     IF lines( lt_selected_lines ) = 0.
-      MESSAGE |No object selected| TYPE 'S' DISPLAY LIKE 'E'.
+      MESSAGE s008(ytrm) DISPLAY LIKE 'E'.
       RETURN.
     ENDIF.
 
     IF lines( lt_selected_lines ) <> 1.
-      MESSAGE |Compare with only one object| TYPE 'S' DISPLAY LIKE 'E'.
+      MESSAGE s009(ytrm) DISPLAY LIKE 'E'.
       RETURN.
     ENDIF.
 
     DATA(ls_alv_output) = alv_output[ lt_selected_lines[ 1 ] ].
     IF ls_alv_output-its_new IS NOT INITIAL.
-      MESSAGE |Object { ls_alv_output-fragname } does not exist in destination system| TYPE 'S' DISPLAY LIKE 'E'.
+      MESSAGE s010(ytrm) WITH ls_alv_output-fragname DISPLAY LIKE 'E'.
       RETURN.
     ENDIF.
     IF ls_alv_output-object = 'TOBJ'.
-      MESSAGE |Object type TOBJ cannot be compare| TYPE 'S' DISPLAY LIKE 'E'.
+      MESSAGE s011(ytrm) DISPLAY LIKE 'E'.
       RETURN.
     ENDIF.
 
@@ -788,7 +788,7 @@ CLASS lcl_app IMPLEMENTATION.
         no_entry     = 1
         OTHERS       = 2.
     IF sy-subrc <> 0.
-      MESSAGE 'Unexpected error' TYPE 'S' DISPLAY LIKE 'E'.
+      MESSAGE s012(ytrm) DISPLAY LIKE 'E'.
       RETURN.
     ENDIF.
 
@@ -1169,7 +1169,7 @@ CLASS lcl_app IMPLEMENTATION.
     DATA lv_answer TYPE char01.
 
     IF rfc_compare_destination <> ycl_trm_transport_request=>get_customizing( )-rfc_to_productive.
-      MESSAGE 'Release request only for production transports' TYPE 'S' DISPLAY LIKE 'E'.
+      MESSAGE s013(ytrm) DISPLAY LIKE 'E'.
       RETURN.
     ENDIF.
 

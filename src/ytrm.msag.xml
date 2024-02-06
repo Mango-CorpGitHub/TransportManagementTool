@@ -31,6 +31,84 @@
      <MSGNR>004</MSGNR>
      <TEXT>Object was not deleted</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>005</MSGNR>
+     <TEXT>No transport request selected</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>006</MSGNR>
+     <TEXT>Select only one object</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>007</MSGNR>
+     <TEXT>Function &amp;1 not implemented</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>008</MSGNR>
+     <TEXT>No object selected</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>009</MSGNR>
+     <TEXT>Compare with only one object</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>010</MSGNR>
+     <TEXT>Object &amp;1 does not exist in destination system</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>011</MSGNR>
+     <TEXT>Object type TOBJ cannot be compare</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>012</MSGNR>
+     <TEXT>Unexpected error</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>013</MSGNR>
+     <TEXT>Release request only for production transports</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>014</MSGNR>
+     <TEXT>RFC destintation is mandatory</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>015</MSGNR>
+     <TEXT>No request found</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>016</MSGNR>
+     <TEXT>At least one request is not from user &amp;1</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>017</MSGNR>
+     <TEXT>At least one task is not from user &amp;1</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

@@ -143,7 +143,7 @@ CLASS lcl_selection_screen IMPLEMENTATION.
     ENDCASE.
 
     IF lv_rfc_compare_destination IS INITIAL.
-      MESSAGE 'RFC destintation is mandatory' TYPE 'S' DISPLAY LIKE 'E'.
+      MESSAGE s014(ytrm) DISPLAY LIKE 'E'.
       RETURN.
     ENDIF.
 
@@ -151,7 +151,7 @@ CLASS lcl_selection_screen IMPLEMENTATION.
                                                                           im_o_parent_logger = go_log ).
 
     IF lines( gt_transport_requests ) = 0.
-      MESSAGE 'No request found' TYPE 'S' DISPLAY LIKE 'E'.
+      MESSAGE s015(ytrm) DISPLAY LIKE 'E'.
       RETURN.
     ENDIF.
 
@@ -159,7 +159,7 @@ CLASS lcl_selection_screen IMPLEMENTATION.
 
       LOOP AT gt_transport_requests ASSIGNING <lo_transport_request>.
         IF <lo_transport_request>->get_owner(  ) NE sy-uname.
-          MESSAGE |At least one request is not from user { sy-uname }| TYPE 'S' DISPLAY LIKE 'E'.
+          MESSAGE s016(ytrm) WITH sy-uname DISPLAY LIKE 'E'.
           RETURN.
         ENDIF.
       ENDLOOP.
@@ -174,7 +174,7 @@ CLASS lcl_selection_screen IMPLEMENTATION.
           ENDIF.
         ENDLOOP.
         IF lv_tasks_of_other_user = abap_true.
-          MESSAGE |At least one task is not from user { sy-uname }| TYPE 'I'.
+          MESSAGE i017(ytrm) WITH sy-uname.
           EXIT.
         ENDIF.
       ENDLOOP.
@@ -183,16 +183,6 @@ CLASS lcl_selection_screen IMPLEMENTATION.
 
     CLEAR go_app.
     CALL SCREEN 100.
-
-*    NEW lcl_app( NEW lcl_alv_qry( ) )->run(
-*      it_transport_request = gt_transport_requests
-*      ir_transport_request = s_trkorr[]
-*      iv_tr_descr     = p_descr
-*      iv_compare      = p_comp
-*      iv_user_request = COND #( WHEN p_usr = abap_true THEN sy-uname ELSE space )
-*      iv_rfc_compare_destination = lv_rfc_compare_destination ).
-*
-*    WRITE space.
 
   ENDMETHOD.
 
