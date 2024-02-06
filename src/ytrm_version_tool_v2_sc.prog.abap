@@ -57,6 +57,8 @@ CLASS lcl_selection_screen DEFINITION.
                 is_screen        TYPE screen
       RETURNING VALUE(rs_screen) TYPE screen.
 
+    CLASS-METHODS execute_f_ses.
+
 ENDCLASS.
 
 CLASS lcl_selection_screen IMPLEMENTATION.
@@ -71,21 +73,7 @@ CLASS lcl_selection_screen IMPLEMENTATION.
         lcl_selected_transport_request=>create( )->display( lt_transport_requests ).
 
       WHEN 'F_SES'.
-
-        DATA(lt_ses_request) = lcl_find_request_by_ses=>create( )->execute( ).
-        IF NOT line_exists( lt_ses_request[ 1 ] ).
-          RETURN.
-        ENDIF.
-
-        s_trkorr[] = VALUE #( FOR lo_ses_request IN lt_ses_request ( sign = 'I' option = 'EQ' low = lo_ses_request->get_code( ) ) ).
-
-        CLEAR p_descr.
-        CLEAR p_owner.
-        CLEAR p_name.
-        IF lt_ses_request IS NOT INITIAL.
-          p_descr = lt_ses_request[ 1 ]->get_description( ).
-          p_owner = lt_ses_request[ 1 ]->get_owner( IMPORTING ex_name = p_name ).
-        ENDIF.
+        execute_f_ses( ).
 
       WHEN OTHERS.
 
@@ -221,6 +209,12 @@ CLASS lcl_selection_screen IMPLEMENTATION.
     IF rs_screen-name = 'F_SES'.
       rs_screen-active = 0.
     ENDIF.
+
+  ENDMETHOD.
+
+
+  METHOD execute_f_ses.
+    " Enchance with button functionality...
 
   ENDMETHOD.
 
