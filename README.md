@@ -1,8 +1,6 @@
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/a74b3db5-4dbb-4b18-a958-799292b0e473)# Transport Management Tool
 
 ## Description
-In ABAP development teams, it's common for programmers to work concurrently on the same objects. This tool centralizes and facilitates tasks related to transport requests, such as creating transport of copies, comparing objects between environments, and collectively releasing request blocks. It allows for making informed decisions with accurate information.
-
+In ABAP development teams, it's common for programmers to have to work concurrently on the same objects. Preparing a transport between environments involves special care for objects with code from multiple developers, excluding changes that haven't been approved for deployment. This tool is born with the purpose of centralizing and facilitating tasks related to transport requests: creating transport of copies, comparing objects between environments, collectively releasing request blocks, and more. Faced with complex tasks, it allows for making the best decisions with the most accurate information. It's a tool made by ABAPers for ABAPers.
 ## Installation
 
 ## Usage
