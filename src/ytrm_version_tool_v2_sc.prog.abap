@@ -133,19 +133,23 @@ CLASS lcl_selection_screen IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD start_of_selection.
+    TRY.
+        DATA(ls_customizing) = ycl_trm_transport_request=>get_customizing( ).
+        CASE abap_true.
+          WHEN rb_q.
+            lv_rfc_compare_destination = ls_customizing-rfc_to_quality.
+          WHEN rb_p.
+            lv_rfc_compare_destination = ls_customizing-rfc_to_productive.
+        ENDCASE.
 
-*    DATA lv_rfc_compare_destination TYPE rfcdest.
-    CASE abap_true.
-      WHEN rb_q.
-        lv_rfc_compare_destination = ycl_trm_transport_request=>get_customizing( )-rfc_to_quality.
-      WHEN rb_p.
-        lv_rfc_compare_destination = ycl_trm_transport_request=>get_customizing( )-rfc_to_productive.
-    ENDCASE.
+      CATCH ycx_trm_transport_request into data(lx_customizing).
+        MESSAGE lx_customizing->get_text(  ) TYPE 'S' DISPLAY LIKE 'E'.
+        RETURN.
+    ENDTRY.
 
-    IF lv_rfc_compare_destination IS INITIAL.
-      MESSAGE s014(ytrm) DISPLAY LIKE 'E'.
-      RETURN.
-    ENDIF.
+*    IF lv_rfc_compare_destination IS INITIAL.
+*
+*    ENDIF.
 
     gt_transport_requests = ycl_trm_transport_request=>get_by_attributes( im_s_query_by_attr = VALUE #( transportrequestid = s_trkorr[] )
                                                                           im_o_parent_logger = go_log ).
