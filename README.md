@@ -36,8 +36,8 @@ For the proper functioning of the tool and to ensure that the provided informati
 Following both best premises, it can be stated as follows: a transportation request should reference a single development or project. All objects contained in that request will correspond to changes related to that development or project.
 Another best practice that facilitates code comparisons is to tag changes with an identifier for the referenced project, the user, and the date of the change. The identifier for the referenced project should be also in the Transport Request description.
 
-
 ## License
+Terms & Conditions set out in the LICENSE.txt file.
 
 ## Contribution
 
