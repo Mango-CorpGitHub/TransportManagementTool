@@ -1126,24 +1126,6 @@ CLASS lcl_app IMPLEMENTATION.
       CATCH cx_salv_existing.
     ENDTRY.
 
-    DATA lt_users TYPE STANDARD TABLE OF sy-uname WITH DEFAULT KEY.
-    lt_users = VALUE #(
-      ( '00752978' )
-      ( '00739817' )
-      ( '03750198' )
-       ).
-
-    IF line_exists( lt_users[ table_line = sy-uname ] ).
-      TRY.
-          lo_functions->add_function( name = 'CLEAN'
-                                      tooltip = 'Clean TRs'
-                                      text = 'Clean TRs'
-                                      icon = CONV #( icon_delete )
-                                      position = if_salv_c_function_position=>right_of_salv_functions ).
-        CATCH cx_salv_existing.
-      ENDTRY.
-    ENDIF.
-
     DATA(lo_checkbox_column) = CAST cl_salv_column_table( alv->get_columns( )->get_column( 'CHECKBOX' ) ).
     lo_checkbox_column->set_short_text( CONV #( 'Reviewed' ) ).
     lo_checkbox_column->set_medium_text( CONV #( 'Has been reviewed' ) ).
