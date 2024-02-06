@@ -5,6 +5,11 @@
 DATA go_app TYPE REF TO lcl_app.
 DATA lv_rfc_compare_destination TYPE rfcdest.
 
+MODULE status_0100 OUTPUT.
+ SET PF-STATUS '0100-STATUS'.
+* SET TITLEBAR 'xxx'.
+ENDMODULE.
+
 MODULE run_app OUTPUT.
 
   IF go_app IS BOUND.
