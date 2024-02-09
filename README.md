@@ -32,9 +32,9 @@ Once the decision has been made on which changes will be uploaded to production,
 
 ## Configuration
 Configure the following variables in transaction STVARV:
-- YTRM_REQUEST_TARGET_QUALITY: System Identifier and Client for the Quality system in format "SYS.CLI".
-- YTRM_RFC_PRODUCTIVE: Trusted RFC against the Productive system with current user.
-- YTRM_RFC_QUALITY: Trusted RFC against the Quality system with current user.
+- **YTRM_REQUEST_TARGET_QUALITY**: System Identifier and Client for the Quality system in format "SYS.CLI".
+- **YTRM_RFC_PRODUCTIVE**: Trusted RFC against the Productive system with current user logon.
+- **YTRM_RFC_QUALITY**: Trusted RFC against the Quality system with current user logon.
 
 ## Best Practices
 For the proper functioning of the tool and to ensure that the provided information is accurate, it is necessary to follow a couple of best practices. 
