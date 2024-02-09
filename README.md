@@ -8,8 +8,13 @@ It has an initial selection screen where the transport requests that the program
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/de2fc362-03cb-40ea-828c-93018e5104a1)
 
 It can be stated that the program has two modes, depending on the system (Quality or Production) against which the transport is to be carried out. The information is presented in the same format in both modes; however, the options are adapted to what the programmer may need in each mode. The option to compare objects complements the information to be displayed.
+
 Use case: Developer 1 is working on a development and stores the changes, both for existing objects and new ones, in a transport request. Developer 2 is working in parallel on another development and also needs to make some changes to objects common to Developer 1. To do this, Developer 2 creates their own transport request and enters the necessary entries for their changes.
 Developer 1 needs to initially upload the changes from their development to the Quality system, with the purpose of verifying proper functionality with more test cases. They use the tool against the Quality system, specify their transport orders, and visualize the following:
+
+
+
+
 The upper ALV corresponds to the list of all objects included in the orders entered in the selection screen. If the "Compare Objects" flag is selected, the subcomponents of each object will be displayed. That is, if the order has the entry R3TR CLAS, it will be shown broken down into its private, public, protected parts, methods, and local classes. It will also indicate if each component is new or has changes compared to the target system. The column that links each object to the lower part's ALV is the collision column. The Collision concept identifies if an object is present in more than one transport order. This allows warning that an object may have changes from another programmer and may need to discard those changes before transporting it to another environment. An object will be identified as having collisions with the Red icon in the "Has Collisions" column. If the icon in the column is green, it indicates that it has no collisions.
 
  ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/7376437e-ff51-4715-aafa-712dc1f0ac80)
