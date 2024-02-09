@@ -43,7 +43,7 @@ Following both best premises, it can be stated as follows: a transportation requ
 Another best practice that facilitates code comparisons is to tag changes with an identifier for the referenced project, the user, and the date of the change. The identifier for the referenced project should be also in the Transport Request description.
 
 ## License
-Terms & Conditions set out in the LICENSE.txt file.
+Terms & Conditions set out in the [a relative link](LICENSE.txt)LICENSE.txt file.
 
 ## Contribution
 
