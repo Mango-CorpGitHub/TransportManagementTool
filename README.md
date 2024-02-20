@@ -3,6 +3,13 @@
 In ABAP development teams, it's common for programmers to have to work concurrently on the same objects. Preparing a transport between environments involves special care for objects with code from multiple developers, excluding changes that haven't been approved for deployment. This tool is born with the purpose of centralizing and facilitating tasks related to transport requests: creating transport of copies, comparing objects between environments, collectively releasing request blocks, and more. Faced with complex tasks, it allows for making the best decisions with the most accurate information. It's a tool made by ABAPers for ABAPers.
 ## Installation
 
+## Configuration
+Configure the following variables in transaction STVARV:
+- **YTRM_REQUEST_TARGET_QUALITY**: System Identifier and Client for the Quality system in format "SYS.CLI".
+- **YTRM_RFC_PRODUCTIVE**: Trusted RFC name against the Productive system with current user logon.
+- **YTRM_RFC_QUALITY**: Trusted RFC name against the Quality system with current user logon.
+  An example of RFC configuration:
+  
 ## Usage
 It has an initial selection screen where the transport requests that the programmer wants to move between systems can be entered.
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/de2fc362-03cb-40ea-828c-93018e5104a1)
@@ -29,12 +36,6 @@ Once Developer 1 has decided to upload their changes to the production environme
 The main functionality in this mode will once again be to display conflicts, identifying which objects need to be reviewed. It will be the programmer's task to decide which changes will be taken to the production environment, and the tool will provide all the information needed to make that decision. Visually, the programmer can indicate what has been reviewed and what has not through the 'Reviewed' column.
 Once the decision has been made on which changes will be uploaded to production, the 'Release' button can be used to release all the transport requests entered on the selection screen.
 
-
-## Configuration
-Configure the following variables in transaction STVARV:
-- **YTRM_REQUEST_TARGET_QUALITY**: System Identifier and Client for the Quality system in format "SYS.CLI".
-- **YTRM_RFC_PRODUCTIVE**: Trusted RFC against the Productive system with current user logon.
-- **YTRM_RFC_QUALITY**: Trusted RFC against the Quality system with current user logon.
 
 ## Best Practices
 For the proper functioning of the tool and to ensure that the provided information is accurate, it is necessary to follow a couple of best practices. 
