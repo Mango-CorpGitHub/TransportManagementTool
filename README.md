@@ -19,5 +19,8 @@ Follow the provided [methodology](best_practices.md) to achieve optimal tool per
 Terms & Conditions set out in the [LICENSE file](LICENSE).
 
 ## Contribution
+Welcome & thanks for taking your time to contribute to the project.
+  * We appreciate [Clean Code](https://github.com/SAP/styleguides/blob/main/clean-abap/CleanABAP.md#avoid-encodings-esp-hungarian-notation-and-prefixes)'s recommandations and we'd like to enforce theses rules. Yet, most of the code has been written previously and we take care not to break compatibility.
+  * Don't hesitate to open an issue before submitting something substantial
 
-## Change History
+
