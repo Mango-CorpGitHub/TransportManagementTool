@@ -6,6 +6,7 @@ Made by ABAPers for ABAPers.
 
 ## Installation
 Install this project via [ABAPGit](https://abapgit.org/). 
+
 Configure it following [Configuration Guide](Configuration_Guide.md). 
   
 ## Usage
