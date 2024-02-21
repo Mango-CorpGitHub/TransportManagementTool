@@ -13,7 +13,7 @@ Configure it following [Configuration Guide](Configuration_Guide.md).
 Learn full potential of this tool with a real example in our [Usage Guide](usage.md).
 
 ## Best Practices
-Follow the provided [methodology](best_practices.md) to achieve optimal tool performance and maintain a coordinated team in all matters related to the transport of objects.
+Follow the provided [methodology](METHODOLOGY.md) to achieve optimal tool performance and maintain a coordinated team in all matters related to the transport of objects.
 
 ## License
 Terms & Conditions set out in the [LICENSE file](LICENSE).
