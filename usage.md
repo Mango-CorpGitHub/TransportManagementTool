@@ -27,11 +27,14 @@ The lower ALV (Collisions) will correspond to the list of transport requests tha
 
 Returning to the previously described use case, it can be observed that **Developer A** has two methods colliding with another transport order. **Developer A** will have to decide whether to include those changes from **Developer B** in their transport to the Quality environment.
 
-Both ALVs are related through the toolbar. 
-In TR Object ALV there are two buttons
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/16ca1ce2-5780-4e4c-8e80-437a8b467c05)
-In Collisions ALV:
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/83740edf-0807-4c18-b1ee-9150998fbc7e)
+Both ALVs are related through the toolbar. The idea is that if the user selects an object from the list, the Collisions ALV will be filtered to display only the requests with conflicts related to that specific component. In the same way, if the user selects a request from the collisions list, the ALV of objects will be filtered to display only those components that are present in that order. For doing this:
+
+In TR Object ALV select an individual object and push button
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/e74908ac-0371-41f4-bc70-3f334a278896)
+
+In Collisions ALV select an indiidual request and push button:
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/2a6630dc-ca5e-4cdb-99a9-2e0c1682fd0e)
+
 
 
 
