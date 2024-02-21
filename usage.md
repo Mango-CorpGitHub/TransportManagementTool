@@ -13,7 +13,7 @@ It can be stated that the program has two modes, depending on the system (Qualit
 
 At a first glance, two ALVs can be seen, each one will show its own information.
 
-The upper ALV (TR Objects) corresponds to the list of all objects included in the requests entered in the selection screen. If the *"Compare Objects"* flag was selected, the subcomponents of each object will be displayed. That is, if the request has the entry R3TR CLAS, it will be shown broken down into its private, public, protected parts, methods, and local classes. It will also indicate if each component is new or has changes (*New* and *Has Changes* columns) compared to the target system. 
+The upper ALV (TR Objects) corresponds to the list of all objects included in the requests entered in the selection screen. If the *"Compare Objects"* flag was selected, the subcomponents of each object will be displayed. That is, if the request has the entry R3TR CLAS, it will be shown broken down into its private, public, protected parts, methods, and local classes. It will also indicate if each component is new or has changes (*It is new* and *It is equal* columns) compared to the target system. 
 It is recommended to use the tool with the *"Compare Objects"* flag checked, even though the comparison between systems may slow down the display of results. Nevertheless, as mentioned earlier, it will allow you to harness the full potential of the tool. 
 If the flag is not checked, the list of request objects will still be displayed, but without breaking down by subcomponents and without identifying if there are changes compared to the destination system.
 
