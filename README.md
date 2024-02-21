@@ -7,10 +7,10 @@ Made by ABAPers for ABAPers.
 ## Installation
 Install this project via [ABAPGit](https://abapgit.org/). 
 
-Configure it following [Configuration Guide](Configuration_Guide.md). 
+Configure it following [Configuration Guide](CONFIGURATION.md). 
   
 ## Usage
-Learn full potential of this tool with a real example in our [Usage Guide](usage.md).
+Learn full potential of this tool with a real example in our [Usage Guide](USAGE.md).
 
 ## Best Practices
 Follow the provided [methodology](METHODOLOGY.md) to achieve optimal tool performance and maintain a coordinated team in all matters related to the transport of objects.
