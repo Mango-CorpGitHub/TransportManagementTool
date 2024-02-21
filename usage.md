@@ -11,10 +11,12 @@ It can be stated that the program has two modes, depending on the system (Qualit
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/590eaf0d-7073-4ef3-b9ef-3817ad6f672c)
 
+At a first glance, two ALVs can be seen, each one will show its own information.
 
+The upper ALV (TR Objects) corresponds to the list of all objects included in the requests entered in the selection screen. If the *"Compare Objects"* flag was selected, the subcomponents of each object will be displayed. That is, if the request has the entry R3TR CLAS, it will be shown broken down into its private, public, protected parts, methods, and local classes. It will also indicate if each component is new or has changes compared to the target system. 
+It is recommended to use the tool with the "Compare Objects" flag checked, even though the comparison between systems may slow down the display of results. Nevertheless, as mentioned earlier, it will allow you to harness the full potential of the tool.
 
-
-The upper ALV corresponds to the list of all objects included in the orders entered in the selection screen. If the "Compare Objects" flag is selected, the subcomponents of each object will be displayed. That is, if the order has the entry R3TR CLAS, it will be shown broken down into its private, public, protected parts, methods, and local classes. It will also indicate if each component is new or has changes compared to the target system. The column that links each object to the lower part's ALV is the collision column. The Collision concept identifies if an object is present in more than one transport order. This allows warning that an object may have changes from another programmer and may need to discard those changes before transporting it to another environment. An object will be identified as having collisions with the Red icon in the "Has Collisions" column. If the icon in the column is green, it indicates that it has no collisions.
+The column that links each object to the lower part's ALV is the *collision* column. The **Collision** concept identifies if an object is present in more than one transport order. This allows warning that an object may have changes from another programmer and may need to discard those changes before transporting it to another environment. An object will be identified as having collisions with the Red icon in the "Has Collisions" column. If the icon in the column is green, it indicates that it has no collisions.
 
  ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/7376437e-ff51-4715-aafa-712dc1f0ac80)
 
