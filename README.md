@@ -1,6 +1,9 @@
 
 ## Description
-In ABAP development teams, it's common for programmers to have to work concurrently on the same objects. Preparing a transport between environments involves special care for objects with code from multiple developers, excluding changes that haven't been approved for deployment. This tool is born with the purpose of centralizing and facilitating tasks related to transport requests: creating transport of copies, comparing objects between environments, collectively releasing request blocks, and more. Faced with complex tasks, it allows for making the best decisions with the most accurate information. It's a tool made by ABAPers for ABAPers.
+In ABAP development teams, it's common for programmers to collaborate on the same objects simultaneously. When preparing a transport between environments, particular attention is required for objects containing code contributed by multiple developers, ensuring that only approved changes are included for deployment. This tool is designed to streamline and centralize tasks associated with transport requests, such as creating transport copies, comparing objects across environments, collectively releasing request blocks, and more. When confronted with complex tasks, it enables programmers to make well-informed decisions based on the most accurate information.
+
+Made by ABAPers for ABAPers.
+
 ## Installation
 Install this project via [ABAPGit](https://abapgit.org/). 
 
