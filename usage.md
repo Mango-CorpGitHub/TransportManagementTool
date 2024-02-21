@@ -27,6 +27,14 @@ The lower ALV (Collisions) will correspond to the list of transport requests tha
 
 Returning to the previously described use case, it can be observed that **Developer A** has two methods colliding with another transport order. **Developer A** will have to decide whether to include those changes from **Developer B** in their transport to the Quality environment.
 
+Both ALVs are related through the toolbar. 
+In TR Object ALV there are two buttons
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/16ca1ce2-5780-4e4c-8e80-437a8b467c05)
+In Collisions ALV:
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/83740edf-0807-4c18-b1ee-9150998fbc7e)
+
+
+
 
 The toolbar of the upper ALV provides common actions in both modes, but in Quality mode, the “Create Transport of Copies” button is particularly interesting. This button automatically creates a transport request (released if the user wishes) with objects containing changes compared to Quality. It is also possible to manually decide from the ALV which objects to include in the order, using the “Add to ToC” column.
  The tool also allows them to compare objects to identify changes in each object.
