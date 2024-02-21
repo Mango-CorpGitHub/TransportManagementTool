@@ -48,7 +48,7 @@ A proposed name is included, along with the option to release the ToC request au
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/149a4f80-9b00-4128-9721-e3390b3e2955)
 
 
-In this mode, the information will be displayed in the same format explained earlier, continuing to show the objects by components and conflicts with other developments. The main difference is that the tool will compare the objects against the production system, allowing identification of what has changed and what is new. It will be the user's task to decide which changes will be taken to the production environment, and the tool will provide all the information needed to make that decision. All functionalities previously described are present in this mode, except (logically) the button to create a copy transport order, in its place, a "Release" button appears.
+In this mode, the information will be displayed in the same format explained earlier, continuing to show the componentes by object and conflicts with other developments. The main difference is that the tool will compare the objects against the production system, allowing identification of what has changed and what is new. It will be the user's task to decide which changes will be taken to the production environment, and the tool will provide all the information needed to make that decision. All functionalities previously described are present in this mode, except (logically) the button to create a copy transport order, in its place, a "Release" button appears.
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/4aa4f033-80c5-450e-b5e5-4fda16cce82d)
 
