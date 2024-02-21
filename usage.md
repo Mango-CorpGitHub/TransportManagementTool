@@ -43,20 +43,16 @@ Returning to the previously described use case, it can be observed that **Develo
 
 A proposed name is included, along with the option to release the ToC request automatically and to open the STMS directly for its import into the destination system.
 
-**Developer A** will repeat this procedure as many times as needed to thoroughly test the functionality that have developed and receive confirmation that the changes are correct and should be taken to production. **Developer A** is aware of changes from **Developer B** (collisions) but does not require those other changes to be confirmed before transporting their own. **Developer A** will only move to Production the changes related to their specific development. In this step, **Developer A** is ready for executing the tool, changing the Destination mode on the selection screen radio-button.
+**Developer A** will repeat this procedure as many times as needed to thoroughly test the functionality that have developed and receive confirmation that the changes are correct and should be taken to production. **Developer A** is aware of changes from **Developer B** (collisions) but does not require those other changes to be confirmed before transporting their own. **Developer A** will only move to Production the changes related to their specific development. In this step, **Developer A** is ready for executing the tool, entering their transport requests and changing the Destination mode on the selection screen radio-button.
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/149a4f80-9b00-4128-9721-e3390b3e2955)
 
 
-In this mode, the information will be displayed in the same format explained earlier, continuing to show the objects by components and conflicts with other developments. The main difference is that the tool will compare the objects against the production system, allowing identification of what has changed and what is new.
+In this mode, the information will be displayed in the same format explained earlier, continuing to show the objects by components and conflicts with other developments. The main difference is that the tool will compare the objects against the production system, allowing identification of what has changed and what is new. It will be the user's task to decide which changes will be taken to the production environment, and the tool will provide all the information needed to make that decision. All functionalities previously described are present in this mode, except (logically) the button to create a copy transport order, in its place, a "Release" button appears.
+
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/4aa4f033-80c5-450e-b5e5-4fda16cce82d)
 
 
 
-The toolbar of the upper ALV provides common actions in both modes, but in Quality mode, the “Create Transport of Copies” button is particularly interesting. This button automatically creates a transport request (released if the user wishes) with objects containing changes compared to Quality. It is also possible to manually decide from the ALV which objects to include in the order, using the “Add to ToC” column.
- The tool also allows them to compare objects to identify changes in each object.
-Once **Developer A** has decided to upload their changes to the production environment, they can rerun the tool in Production mode. This mode will again display the previously explained ALVs of objects and collisions, with the difference that it will compare them against the production environment.
-
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/dd64ab05-9945-4246-8c5a-549f4e8c027e)
- 
-The main functionality in this mode will once again be to display conflicts, identifying which objects need to be reviewed. It will be the programmer's task to decide which changes will be taken to the production environment, and the tool will provide all the information needed to make that decision. Visually, the programmer can indicate what has been reviewed and what has not through the 'Reviewed' column.
+Visually, the programmer can indicate what has been reviewed and what has not through the 'Reviewed' column.
 Once the decision has been made on which changes will be uploaded to production, the 'Release' button can be used to release all the transport requests entered on the selection screen.
