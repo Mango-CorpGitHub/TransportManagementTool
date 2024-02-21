@@ -17,7 +17,6 @@ Configure the following variables in transaction `STVARV`:
 ## Usage
 Learn full potential of this tool with a real example in our [Usage Guide](usage.md).
 
-
 ## Best Practices
 Follow the provided [methodology](best_practices.md) to achieve optimal tool performance and maintain a coordinated team in all matters related to the transport of objects.
 
