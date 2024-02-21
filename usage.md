@@ -4,7 +4,6 @@ Use case: **Developer A** is working on a development and stores the changes, bo
 For doing that **Developer A** excutes this Transport Management Tool.
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/fe3a9f52-7ac4-4493-b905-0357d53f29fe) 
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/6df5e70e-f18a-4e41-9107-ae380d9b3d30)
 
 
 **Developer A** has an initial selection screen where the transport requests that the programmer wants to move between systems can be entered.
