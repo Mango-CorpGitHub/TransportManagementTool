@@ -5,9 +5,9 @@ For doing that **Developer A** excutes this Transport Management Tool. Selection
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/0011595c-3cae-45e9-a775-accd6111aec7)
 
-It can be stated that the program has two modes, depending on the system (Quality or Production) against which the transport is to be carried out. The information is presented in the same format in both modes; however, the options are adapted to what the programmer may need in each mode. The check-box "Compare Objects" complements the information to be displayed.
+It can be stated that the program has two modes, depending on the system (Quality or Production) against which the transport is to be carried out. The information is presented in the same format in both modes; however, the options are adapted to what the programmer may need in each mode. The check-box *"Compare Objects"* complements the information to be displayed.
 
-**Developer A** should enter their transport request(s) in the select-option "Request/Task" and mark the Quality destination. To fully leverage the functionality of the tool, the "Compare objects" checkbox should also be checked. If "Only my request" box is checked, tool will verify if there is a Transport Request/Task among those entered whose owner is not the user who executes the program, useful for checking errors. Once executed, a screen similar to the following will be displayed:
+**Developer A** should enter their transport request(s) in the select-option *"Request/Task"* and mark the Quality destination. To fully leverage the functionality of the tool, the *"Compare objects"* checkbox should also be checked. If *"Only my request"* box is checked, tool will verify if there is a Transport Request/Task among those entered whose owner is not the user who executes the program, useful for checking errors. Once executed, a screen similar to the following will be displayed:
 
 
 
