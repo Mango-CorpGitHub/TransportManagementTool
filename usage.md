@@ -37,7 +37,7 @@ In Collisions ALV select an indiidual request and push button
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/2a6630dc-ca5e-4cdb-99a9-2e0c1682fd0e)
 
-
+The "Show all collisions" buttons will allow returning to the initial state and clearing any filtering.
 
 
 
