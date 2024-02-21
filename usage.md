@@ -3,12 +3,13 @@ Use case: **Developer A** is working on a development and stores the changes, bo
 **Developer A** needs to initially upload the changes from their development to the Quality system, with the purpose of verifying proper functionality with more test cases.
 For doing that **Developer A** excutes this Transport Management Tool.
 
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/fe3a9f52-7ac4-4493-b905-0357d53f29fe) 
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/0011595c-3cae-45e9-a775-accd6111aec7)
+
+It can be stated that the program has two modes, depending on the system (Quality or Production) against which the transport is to be carried out. The information is presented in the same format in both modes; however, the options are adapted to what the programmer may need in each mode. The check-box "Compare Objects" complements the information to be displayed.
+
+**Developer A** should fill request(s) that 
 
 
-**Developer A** has an initial selection screen where the transport requests that the programmer wants to move between systems can be entered.
-
-It can be stated that the program has two modes, depending on the system (Quality or Production) against which the transport is to be carried out. The information is presented in the same format in both modes; however, the options are adapted to what the programmer may need in each mode. The option to compare objects complements the information to be displayed.
 
 
  They use the tool against the Quality system, specify their transport orders, and visualize the following:
