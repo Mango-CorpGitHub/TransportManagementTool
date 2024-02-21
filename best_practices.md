@@ -1,3 +1,5 @@
+# Methodology
+
 For the proper using of the tool and to ensure that the provided information is accurate, it is recommended to follow some best practices. 
 
 Firstly, a programmer could have as many transport requests as they deem necessary; however, each transport request should be clearly identified. Ideally, the description should identify the project and ticket to which it refers, being as specific as possible.
