@@ -30,9 +30,11 @@ Returning to the previously described use case, it can be observed that **Develo
 Both ALVs are related through the toolbar. The idea is that if the user selects an object from the list, the Collisions ALV will be filtered to display only the requests with conflicts related to that specific component. In the same way, if the user selects a request from the collisions list, the ALV of objects will be filtered to display only those components that are present in that order. For doing this:
 
 In TR Object ALV select an individual object and push button
+
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/e74908ac-0371-41f4-bc70-3f334a278896)
 
-In Collisions ALV select an indiidual request and push button:
+In Collisions ALV select an indiidual request and push button
+
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/2a6630dc-ca5e-4cdb-99a9-2e0c1682fd0e)
 
 
