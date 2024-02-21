@@ -13,12 +13,15 @@ It can be stated that the program has two modes, depending on the system (Qualit
 
 At a first glance, two ALVs can be seen, each one will show its own information.
 
-The upper ALV (TR Objects) corresponds to the list of all objects included in the requests entered in the selection screen. If the *"Compare Objects"* flag was selected, the subcomponents of each object will be displayed. That is, if the request has the entry R3TR CLAS, it will be shown broken down into its private, public, protected parts, methods, and local classes. It will also indicate if each component is new or has changes compared to the target system. 
-It is recommended to use the tool with the "Compare Objects" flag checked, even though the comparison between systems may slow down the display of results. Nevertheless, as mentioned earlier, it will allow you to harness the full potential of the tool.
+The upper ALV (TR Objects) corresponds to the list of all objects included in the requests entered in the selection screen. If the *"Compare Objects"* flag was selected, the subcomponents of each object will be displayed. That is, if the request has the entry R3TR CLAS, it will be shown broken down into its private, public, protected parts, methods, and local classes. It will also indicate if each component is new or has changes (*New* and *Has Changes* columns) compared to the target system. 
+It is recommended to use the tool with the *"Compare Objects"* flag checked, even though the comparison between systems may slow down the display of results. Nevertheless, as mentioned earlier, it will allow you to harness the full potential of the tool. 
+If the flag is not checked, the list of request objects will still be displayed, but without breaking down by subcomponents and without identifying if there are changes compared to the destination system.
 
-The column that links each object to the lower part's ALV is the *collision* column. The **Collision** concept identifies if an object is present in more than one transport order. This allows warning that an object may have changes from another programmer and may need to discard those changes before transporting it to another environment. An object will be identified as having collisions with the Red icon in the "Has Collisions" column. If the icon in the column is green, it indicates that it has no collisions.
+The column that links each object to the lower part's ALV is the *Collision* column. The **Collision** concept identifies if an object is present in more than one transport request. This allows warning that an object may have changes from another programmer and may need to discard those changes before transporting it to another environment. An object/subobject will be identified as having collisions with the Red icon in the *"Has Collisions"* column. If the icon in the column is green, it indicates that it has no collisions.
 
  ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/7376437e-ff51-4715-aafa-712dc1f0ac80)
+
+The objects in the ALV will be sorted to display those with collisions first, as they require special attention.
 
 The lower ALV will correspond to the list of transport requests that have collisions with the objects from the transport entered on the selection screen.
 The toolbar of the upper ALV provides common actions in both modes, but in Quality mode, the “Create Transport of Copies” button is particularly interesting. This button automatically creates a transport request (released if the user wishes) with objects containing changes compared to Quality. It is also possible to manually decide from the ALV which objects to include in the order, using the “Add to ToC” column.
