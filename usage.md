@@ -48,11 +48,9 @@ A proposed name is included, along with the option to release the ToC request au
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/149a4f80-9b00-4128-9721-e3390b3e2955)
 
 
-In this mode, the information will be displayed in the same format explained earlier, continuing to show the componentes by object and conflicts with other developments. The main difference is that the tool will compare the objects against the production system, allowing identification of what has changed and what is new. It will be the user's task to decide which changes will be taken to the production environment, and the tool will provide all the information needed to make that decision. All functionalities previously described are present in this mode, except (logically) the button to create a copy transport order, in its place, a "Release" button appears.
+In this mode, the information will be displayed in the same format explained earlier, continuing to show the componentes by object and conflicts with other developments. The main difference is that the tool will compare the objects against the production system, allowing identification of what has changed and what is new. It will be the user's task to decide which changes will be taken to the production environment, and the tool will provide all the information needed to make that decision. All functionalities previously described are present in this mode, except (logically) the button to create a Transport of Copies request, in its place, a "Release" button appears.
 
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/4aa4f033-80c5-450e-b5e5-4fda16cce82d)
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/7d5eddd1-dec2-4be9-a6aa-c1ccaeb223ca)
 
+It is again advisable for **Developer A** to review the conflicts, identify which code should not be transported, and ensure the transport before releasing. Visually, there is a *"Reviewed"* column in ALV to provide an indicator of which objects have been checked. Once **Developer A** has removed the code that should not be included and is confident in their decision, *"Release"* button could be pushed. with this button, all the transport request entered on the selection screen will be released simultaneously and ready to be imported into the subsequent systems.
 
-
-Visually, the programmer can indicate what has been reviewed and what has not through the 'Reviewed' column.
-Once the decision has been made on which changes will be uploaded to production, the 'Release' button can be used to release all the transport requests entered on the selection screen.
