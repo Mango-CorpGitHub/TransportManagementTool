@@ -23,9 +23,13 @@ The column that links each object to the lower part's ALV is the *Collision* col
 
 The objects in the ALV will be sorted to display those with collisions first, as they require special attention.
 
-The lower ALV will correspond to the list of transport requests that have collisions with the objects from the transport entered on the selection screen.
+The lower ALV (Collisions) will correspond to the list of transport requests that have collisions with the objects from the transport entered on the selection screen.
+
+Returning to the previously described use case, it can be observed that **Developer A** has two methods colliding with another transport order. **Developer A** will have to decide whether to include those changes from **Developer B** in their transport to the Quality environment.
+
+
 The toolbar of the upper ALV provides common actions in both modes, but in Quality mode, the “Create Transport of Copies” button is particularly interesting. This button automatically creates a transport request (released if the user wishes) with objects containing changes compared to Quality. It is also possible to manually decide from the ALV which objects to include in the order, using the “Add to ToC” column.
-Returning to the previously described use case, it can be observed that **Developer A** has two methods colliding with another transport order. They will have to decide whether to include those changes from **Developer B** in their transports. The tool also allows them to compare objects to identify changes in each object.
+ The tool also allows them to compare objects to identify changes in each object.
 Once **Developer A** has decided to upload their changes to the production environment, they can rerun the tool in Production mode. This mode will again display the previously explained ALVs of objects and collisions, with the difference that it will compare them against the production environment.
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/dd64ab05-9945-4246-8c5a-549f4e8c027e)
