@@ -1,7 +1,7 @@
-Use case: Developer 1 is working on a development and stores the changes, both for existing objects and new ones, in a transport request. Developer 2 is working in parallel on another development and also needs to make some changes to objects common to Developer 1. To do this, Developer 2 creates their own transport request and enters the necessary entries for their changes.
-Developer 1 needs to initially upload the changes from their development to the Quality system, with the purpose of verifying proper functionality with more test cases.
+Use case: Developer A is working on a development and stores the changes, both for existing objects and new ones, in a transport request. Developer B is working in parallel on another development and also needs to make some changes to objects common to Develope A. To do this, Developer B creates their own transport request and enters the necessary entries for their changes.
+Develope A needs to initially upload the changes from their development to the Quality system, with the purpose of verifying proper functionality with more test cases.
 
-Developer 1 has an initial selection screen where the transport requests that the programmer wants to move between systems can be entered.
+Develope A has an initial selection screen where the transport requests that the programmer wants to move between systems can be entered.
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/de2fc362-03cb-40ea-828c-93018e5104a1)
 
 It can be stated that the program has two modes, depending on the system (Quality or Production) against which the transport is to be carried out. The information is presented in the same format in both modes; however, the options are adapted to what the programmer may need in each mode. The option to compare objects complements the information to be displayed.
@@ -15,8 +15,8 @@ The upper ALV corresponds to the list of all objects included in the orders ente
 
 The lower ALV will correspond to the list of transport requests that have collisions with the objects from the transport entered on the selection screen.
 The toolbar of the upper ALV provides common actions in both modes, but in Quality mode, the “Create Transport of Copies” button is particularly interesting. This button automatically creates a transport request (released if the user wishes) with objects containing changes compared to Quality. It is also possible to manually decide from the ALV which objects to include in the order, using the “Add to ToC” column.
-Returning to the previously described use case, it can be observed that Developer 1 has two methods colliding with another transport order. They will have to decide whether to include those changes from Developer 2 in their transports. The tool also allows them to compare objects to identify changes in each object.
-Once Developer 1 has decided to upload their changes to the production environment, they can rerun the tool in Production mode. This mode will again display the previously explained ALVs of objects and collisions, with the difference that it will compare them against the production environment.
+Returning to the previously described use case, it can be observed that Develope A has two methods colliding with another transport order. They will have to decide whether to include those changes from Developer B in their transports. The tool also allows them to compare objects to identify changes in each object.
+Once Develope A has decided to upload their changes to the production environment, they can rerun the tool in Production mode. This mode will again display the previously explained ALVs of objects and collisions, with the difference that it will compare them against the production environment.
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/dd64ab05-9945-4246-8c5a-549f4e8c027e)
  
