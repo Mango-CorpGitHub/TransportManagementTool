@@ -9,9 +9,7 @@ It can be stated that the program has two modes, depending on the system (Qualit
 
 **Developer A** should enter their transport request(s) in the select-option *"Request/Task"* and mark the Quality destination. To fully leverage the functionality of the tool, the *"Compare objects"* checkbox should also be checked. If *"Only my request"* box is checked, tool will verify if there is a Transport Request/Task among those entered whose owner is not the user who executes the program, useful for checking errors. Once executed, a screen similar to the following will be displayed:
 
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/1b7293ac-af4d-462d-abc6-285da2c3b21f)
-
-
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/590eaf0d-7073-4ef3-b9ef-3817ad6f672c)
 
 
 
