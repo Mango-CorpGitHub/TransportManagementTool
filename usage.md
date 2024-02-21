@@ -39,7 +39,7 @@ The "Show all collisions" buttons will allow returning to the initial state and 
 
 Returning to the previously described use case, it can be observed that **Developer A** has two methods colliding with another transport order. **Developer A** will have to decide whether to include those changes from **Developer B** in their transport to the Quality environment. For doing that, TR Object ALV has a *Compare Object* button for checking individual components with changes against destination system. Once **Developer A** has decided which changes to upload to Quality to test their development, the tool will allow them to create a copy order for this purpose. In Quality mode *"Create Transport of Copies"* button is available for that purpose. This button automatically creates a transport request (released if the user wishes) with objects containing changes compared to Quality. By default, this tool will only include all new and modified components. However, it is also possible to manually select which objects from the ALV to include or exclude in the Transport of Copies request. This is possible thanks to the *"Add to ToC"* column. When user has decided which objects will be included and push the button, a popup like this will be shown:
 
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/838fb0a9-97aa-4857-8b37-e380713aa93d)
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/234de07f-1f45-4a29-af54-b4df4507a700)
 
 A proposed name is included, along with the option to release the ToC request automatically and to open the STMS directly for its import into the destination system.
 
