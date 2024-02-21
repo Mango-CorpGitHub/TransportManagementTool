@@ -1,4 +1,4 @@
-#Usage Guide
+# Usage Guide
 **Developer A** is working on a development and stores the changes, both for existing objects and new ones, in a transport request. **Developer B** is working in parallel on another development and also needs to make some changes to objects common to **Developer A**. To do this, **Developer B** creates their own transport request and enters the necessary entries for their changes.
 
 **Developer A** needs to initially upload the changes from their development to the Quality system, with the purpose of verifying proper functionality with more test cases.
