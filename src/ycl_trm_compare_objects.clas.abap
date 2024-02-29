@@ -120,7 +120,8 @@ CLASS ycl_trm_compare_objects IMPLEMENTATION.
       WHEN 0.
       WHEN 1.
         MESSAGE i008(tsys) WITH _rfc_compare_destination.
-        RAISE EXCEPTION NEW ycx_trm_transport_request(  ).
+        data(lx_tr) = NEW ycx_trm_transport_request(  ).
+        RAISE EXCEPTION lx_tr.
       WHEN OTHERS.
         MESSAGE i015(tsys).
     ENDCASE.
