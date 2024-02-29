@@ -1,3 +1,6 @@
+## ABAP Version
+Tested in SAP_ABA	740	0020
+
 ## Configuration Guide
 Configure the following variables in transaction `STVARV`:
 - **YTRM_REQUEST_TARGET_QUALITY**: System Identifier and Client for the Quality system in format "SYS.CLI".
