@@ -87,9 +87,9 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
       IF im_s_tr_query_by_attr-code IS NOT INITIAL.
         SELECT tr~transportrequestid
           FROM yc_transportrequest AS tr
-         INNER JOIN @im_s_tr_query_by_attr-code AS code
-            ON tr~transportrequestid EQ code~code
-         WHERE (lv_query)
+           FOR ALL ENTRIES IN @im_s_tr_query_by_attr-code
+         WHERE tr~transportrequestid EQ @im_s_tr_query_by_attr-code-code
+           AND (lv_query)
           INTO TABLE @DATA(lt_code).
       ELSE.
         SELECT tr~transportrequestid
@@ -111,9 +111,9 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
           FROM yc_transportrequest AS tr
          INNER JOIN yc_transportrequestobject AS trobj
             ON tr~transportrequestid EQ trobj~transportrequestid
-         INNER JOIN @im_s_tr_query_by_attr-code AS code
-            ON tr~transportrequestid EQ code~code
-         WHERE (lv_query)
+           FOR ALL ENTRIES IN @im_s_tr_query_by_attr-code
+         WHERE tr~transportrequestid EQ @im_s_tr_query_by_attr-code-code
+           AND (lv_query)
           INTO TABLE @DATA(lt_code_obj).
       ELSE.
         SELECT tr~transportrequestid
@@ -126,7 +126,9 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
 
 
       ENDIF.
-      lt_code = CORRESPONDING #( lt_code_obj DISCARDING DUPLICATES MAPPING transportrequestid = transportrequestid ).
+*      lt_code = CORRESPONDING #( lt_code_obj DISCARDING DUPLICATES MAPPING transportrequestid = transportrequestid ).
+
+      lt_code =  CORRESPONDING #( lt_code_obj ).
       SORT lt_code BY transportrequestid.
       DELETE ADJACENT DUPLICATES FROM lt_code COMPARING transportrequestid.
 
@@ -145,7 +147,6 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
      WHERE description IN @im_s_tr_query_by_description-description
      INTO TABLE @DATA(lt_code).
 
-    lt_code = CORRESPONDING #( lt_code DISCARDING DUPLICATES MAPPING transportrequestid = transportrequestid ).
     SORT lt_code BY transportrequestid.
     DELETE ADJACENT DUPLICATES FROM lt_code COMPARING transportrequestid.
     re_t_code = lt_code.
@@ -363,10 +364,10 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
 
     DATA lt_code TYPE yif_trm_transport_request_db~typ_t_code.
 
-    SELECT tr~TransportRequestId AS code
+    SELECT tr~transportrequestid AS code
       FROM yc_transportrequest AS tr
        FOR ALL ENTRIES IN @im_t_transport_request
-     WHERE tr~TransportRequestId EQ @im_t_transport_request-code
+     WHERE tr~transportrequestid EQ @im_t_transport_request-code
       INTO TABLE @lt_code.
 
     re_t_exists = VALUE #( FOR <tr> IN im_t_transport_request ( code   = <tr>-code
@@ -507,8 +508,8 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
 
     SELECT trcustoentries~*
       FROM yc_transportrequestobjectcusto AS trcustoentries
-       for all entries in @im_t_transport_request
-     where trcustoentries~transportrequestid = @im_t_transport_request-code
+       FOR ALL ENTRIES IN @im_t_transport_request
+     WHERE trcustoentries~transportrequestid = @im_t_transport_request-code
       INTO TABLE @lt_entries.
 
     re_t_custo_entries = VALUE #( FOR <tr> IN im_t_transport_request ( code    = <tr>-code

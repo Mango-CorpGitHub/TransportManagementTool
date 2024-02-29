@@ -84,8 +84,9 @@ CLASS lcl_selection_screen IMPLEMENTATION.
 
         lt_transport_requests = ycl_trm_transport_request=>get_by_attributes( im_s_query_by_attr = VALUE #( transportrequestid = s_trkorr[] ) ).
         IF lt_transport_requests IS NOT INITIAL.
-          p_descr = lt_transport_requests[ 1 ]->get_description( ).
-          p_owner = lt_transport_requests[ 1 ]->get_owner( IMPORTING ex_name = p_name ).
+          DATA(lo_tr) = lt_transport_requests[ 1 ].
+          p_descr = lo_tr->get_description( ).
+          p_owner = lo_tr->get_owner( IMPORTING ex_name = p_name ).
         ELSE.
           CLEAR p_descr.
           CLEAR p_owner.

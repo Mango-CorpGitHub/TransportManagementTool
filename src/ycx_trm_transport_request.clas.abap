@@ -9,8 +9,7 @@ CLASS ycx_trm_transport_request DEFINITION
     INTERFACES if_t100_dyn_msg .
     INTERFACES if_t100_message .
 
-    ALIASES msgty
-      FOR if_t100_dyn_msg~msgty .
+    DATA: msgty TYPE symsgty.
 
     CONSTANTS:
       BEGIN OF not_exists,

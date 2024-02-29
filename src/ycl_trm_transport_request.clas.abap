@@ -87,7 +87,7 @@ ENDCLASS.
 
 
 
-CLASS YCL_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
+CLASS ycl_trm_transport_request IMPLEMENTATION.
 
 
   METHOD yif_trm_transport_request~unlock.
@@ -168,7 +168,10 @@ CLASS YCL_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
         foreign_lock   = 1
         system_failure = 2.
     IF sy-subrc IS NOT INITIAL.
-      RAISE EXCEPTION transport_request_exception( ycx_trm_transport_request=>is_locked ).
+      DATA(lx_tr) = transport_request_exception( ycx_trm_transport_request=>is_locked ).
+
+      RAISE EXCEPTION lx_tr.
+
     ENDIF.
 
   ENDMETHOD.
@@ -490,18 +493,24 @@ CLASS YCL_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
     rs_customizing = get_db_interface( )->fetch_customizing( ).
 
     IF rs_customizing-request_target_system_quality IS INITIAL.
-      RAISE EXCEPTION NEW ycx_trm_transport_request( textid = ycx_trm_transport_request=>customizing_missing_in_stvarvc
+      DATA(lx_tr) = NEW ycx_trm_transport_request( textid = ycx_trm_transport_request=>customizing_missing_in_stvarvc
                                                      customizing_name = yif_trm_transport_request_db=>c_customizing-request_target_quality_name ).
+
+      RAISE EXCEPTION lx_tr.
     ENDIF.
 
     IF rs_customizing-rfc_to_productive IS INITIAL.
-      RAISE EXCEPTION NEW ycx_trm_transport_request( textid = ycx_trm_transport_request=>customizing_missing_in_stvarvc
+      lx_tr = NEW ycx_trm_transport_request( textid = ycx_trm_transport_request=>customizing_missing_in_stvarvc
                                                      customizing_name = yif_trm_transport_request_db=>c_customizing-rfc_to_productive_name ).
+
+      RAISE EXCEPTION lx_tr.
     ENDIF.
 
     IF rs_customizing-rfc_to_quality IS INITIAL.
-      RAISE EXCEPTION NEW ycx_trm_transport_request( textid = ycx_trm_transport_request=>customizing_missing_in_stvarvc
+      lx_tr = NEW ycx_trm_transport_request( textid = ycx_trm_transport_request=>customizing_missing_in_stvarvc
                                                      customizing_name = yif_trm_transport_request_db=>c_customizing-rfc_to_quality_name ).
+
+      RAISE EXCEPTION lx_tr.
     ENDIF.
 
   ENDMETHOD.
@@ -590,7 +599,9 @@ CLASS YCL_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
     as_o_db_interface = get_db_interface( ).
 
     IF NOT as_o_db_interface->check_exists( me ).
-      RAISE EXCEPTION transport_request_exception( ycx_trm_transport_request=>not_exists ).
+      DATA(lx_tr)  = transport_request_exception( ycx_trm_transport_request=>not_exists ).
+
+      RAISE EXCEPTION lx_tr.
     ENDIF.
   ENDMETHOD.
 
@@ -602,7 +613,7 @@ CLASS YCL_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
 
   METHOD yif_trm_transport_request~delete_entry.
 
-    DATA(ls_request) = VALUE trwbo_request( h = value #( trkorr = yif_trm_transport_request~get_code(  ) ) ).
+    DATA(ls_request) = VALUE trwbo_request( h = VALUE #( trkorr = yif_trm_transport_request~get_code(  ) ) ).
 
     CALL FUNCTION 'TR_DELETE_COMM_OBJECT_KEYS'
       EXPORTING
@@ -632,7 +643,8 @@ CLASS YCL_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
         w_user_not_owner            = 15
         OTHERS                      = 16.
     IF sy-subrc IS NOT INITIAL.
-        RAISE EXCEPTION transport_request_exception( ycx_trm_transport_request=>entry_not_deleted ).
+      DATA(lx_tr) = transport_request_exception( ycx_trm_transport_request=>entry_not_deleted ).
+      RAISE EXCEPTION lx_tr.
     ENDIF.
   ENDMETHOD.
 ENDCLASS.

@@ -172,9 +172,11 @@ CLASS lcl_alv_qry DEFINITION.
     METHODS execute
       IMPORTING
         iv_rfc_compare_destination TYPE rfcdest
-        iv_compare                 TYPE abap_bool
+*        iv_compare                 TYPE abap_bool
         ir_transport_request       TYPE ty_r_trkorr
-        it_transport_request       TYPE yif_trm_transport_request=>tab.
+        it_transport_request       TYPE yif_trm_transport_request=>tab
+     changing
+        cv_compare                 TYPE abap_bool.
 
 ENDCLASS.
 
@@ -190,27 +192,48 @@ CLASS lcl_alv_qry IMPLEMENTATION.
                                     ( entry )
                            ).
 
-    IF iv_compare EQ abap_true.
+    IF cv_compare EQ abap_true.
 
-      DATA(lt_comparasion) = ycl_trm_compare_objects=>create( iv_rfc_compare_destination )->compare( lt_tr_objects ).
+      TRY.
+          DATA(lt_comparasion) = ycl_trm_compare_objects=>create( iv_rfc_compare_destination )->compare( lt_tr_objects ).
 
-      DATA(lt_fragments_and_objects) = VALUE ycl_trm_get_objects_w_colision=>tyt_objects(
-        FOR ls_comparison IN lt_comparasion
-        ( pgmid = ls_comparison-pgmid
-          object =  ls_comparison-object
-          obj_name = ls_comparison-obj_name  ) ).
+          DATA(lt_fragments_and_objects) = VALUE ycl_trm_get_objects_w_colision=>tyt_objects(
+            FOR ls_comparison IN lt_comparasion
+            ( pgmid = ls_comparison-pgmid
+              object =  ls_comparison-object
+              obj_name = ls_comparison-obj_name  ) ).
 
-      lt_fragments_and_objects = VALUE ycl_trm_get_objects_w_colision=>tyt_objects(
-        BASE lt_fragments_and_objects
-        FOR ls_comparison IN lt_comparasion
-        ( pgmid = ls_comparison-fragid
-          object =  ls_comparison-fragment
-          obj_name = ls_comparison-fragname ) ).
+          lt_fragments_and_objects = VALUE ycl_trm_get_objects_w_colision=>tyt_objects(
+            BASE lt_fragments_and_objects
+            FOR ls_comparison IN lt_comparasion
+            ( pgmid = ls_comparison-fragid
+              object =  ls_comparison-fragment
+              obj_name = ls_comparison-fragname ) ).
 
-      result = CORRESPONDING #( lt_comparasion MAPPING its_equal    = equal
-                                                       its_new      = not_comparable
-                                                       not_compared = not_compared ).
+          result = CORRESPONDING #( lt_comparasion MAPPING its_equal    = equal
+                                                           its_new      = not_comparable
+                                                           not_compared = not_compared ).
+        CATCH ycx_trm_transport_request.
+          cv_compare = abap_false.
 
+          lt_fragments_and_objects = VALUE ycl_trm_get_objects_w_colision=>tyt_objects( FOR lo_tr_objects IN lt_tr_objects
+                                                                                     ( pgmid    = lo_tr_objects->get_object_id( )
+                                                                                       object   = lo_tr_objects->get_object_type( )
+                                                                                       obj_name = lo_tr_objects->get_object_name( )
+                                                                                     )
+                                                                               ).
+
+          result = VALUE #( FOR object IN lt_tr_objects
+                             (
+                               pgmid     = object->get_object_id( )
+                               object    = object->get_object_type( )
+                               obj_name  = object->get_object_name( )
+                               objfunc   = object->get_function( )
+                               activity  = object->get_activity( )
+                               lang      = object->get_language( )
+                              )
+                           ).
+      ENDTRY.
     ELSE.
 
       lt_fragments_and_objects = VALUE ycl_trm_get_objects_w_colision=>tyt_objects( FOR lo_tr_objects IN lt_tr_objects
@@ -959,11 +982,12 @@ CLASS lcl_app IMPLEMENTATION.
 
   METHOD _find_data.
     alv_qry->execute(
-        iv_rfc_compare_destination = iv_rfc_compare_destination
-        iv_compare                 = ai_compare
+        exporting iv_rfc_compare_destination = iv_rfc_compare_destination
+*        iv_compare                 = ai_compare
         ir_transport_request       = ir_transport_request
         it_transport_request       = it_transport_request
-        ).
+        changing
+        cv_compare                 = ai_compare ).
     rt_result = CORRESPONDING #( alv_qry->result ).
   ENDMETHOD.
 
@@ -1125,6 +1149,24 @@ CLASS lcl_app IMPLEMENTATION.
                                     position = if_salv_c_function_position=>right_of_salv_functions ).
       CATCH cx_salv_existing.
     ENDTRY.
+
+    DATA lt_users TYPE STANDARD TABLE OF sy-uname WITH DEFAULT KEY.
+    lt_users = VALUE #(
+      ( '00752978' )
+      ( '00739817' )
+      ( '03750198' )
+       ).
+
+    IF line_exists( lt_users[ table_line = sy-uname ] ).
+      TRY.
+          lo_functions->add_function( name = 'CLEAN'
+                                      tooltip = 'Clean TRs'
+                                      text = 'Clean TRs'
+                                      icon = CONV #( icon_delete )
+                                      position = if_salv_c_function_position=>right_of_salv_functions ).
+        CATCH cx_salv_existing.
+      ENDTRY.
+    ENDIF.
 
     DATA(lo_checkbox_column) = CAST cl_salv_column_table( alv->get_columns( )->get_column( 'CHECKBOX' ) ).
     lo_checkbox_column->set_short_text( CONV #( 'Reviewed' ) ).
@@ -1311,7 +1353,7 @@ CLASS lcl_app IMPLEMENTATION.
               im_o_parent_logger     = io_log
           ).
 
-          lo_transport_request->lock(  ).
+          lo_transport_request->lock( ).
 
           lo_transport_request->add_objects(
               EXPORTING
@@ -1322,7 +1364,7 @@ CLASS lcl_app IMPLEMENTATION.
                                       )
           ).
 
-          lo_transport_request->unlock(  ).
+          lo_transport_request->unlock( ).
 
           IF lv_release EQ abap_true.
 
@@ -1334,9 +1376,10 @@ CLASS lcl_app IMPLEMENTATION.
 
       ENDTRY.
 
+      DATA(lv_log_has_errors) = io_log->has_errors( ).
       io_log->display( ).
 
-      IF NOT io_log->has_errors( ) AND
+      IF lv_log_has_errors = abap_false AND
          lv_go_to_stms = abap_true AND
          lv_release = abap_true.
         CALL FUNCTION 'ABAP4_CALL_TRANSACTION' STARTING NEW TASK 'TEST'

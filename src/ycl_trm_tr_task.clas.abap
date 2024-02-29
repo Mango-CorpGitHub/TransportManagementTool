@@ -36,11 +36,8 @@ CLASS ycl_trm_tr_task IMPLEMENTATION.
     ).
 
     IF get_db_interface(  )->fetch_data( me )-transportrequestparentid IS INITIAL.
-      RAISE EXCEPTION transport_request_exception(
-*                          textid   =
-*                          previous =
-*                          msgty    = yif_log=>msgty-error
-        ).
+      data(lx_tr) = NEW ycx_trm_transport_request( ).
+      RAISE EXCEPTION lx_tr.
     ENDIF.
   ENDMETHOD.
 

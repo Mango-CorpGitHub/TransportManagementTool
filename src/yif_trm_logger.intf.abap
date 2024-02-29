@@ -26,6 +26,8 @@ INTERFACE yif_trm_logger
 
   METHODS add_from_stmscalert IMPORTING im_s_stmscalert TYPE stmscalert.
 
+  METHODS add_from_ctsgerrmsg IMPORTING im_t_ctsgerrmsgs TYPE ctsgerrmsgs.
+
   METHODS add_from_system_variables.
 
   METHODS has_errors

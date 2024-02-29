@@ -88,7 +88,8 @@ CLASS ycl_trm_tr_object IMPLEMENTATION.
         OTHERS            = 2.
     IF sy-subrc <> 0.
       lo_log->add_from_system_variables( ).
-      RAISE EXCEPTION NEW ycx_trm_transport_request( logger = lo_log ).
+      DATA(lx_tr) = NEW ycx_trm_transport_request( logger = lo_log ).
+      RAISE EXCEPTION lx_tr.
     ENDIF.
 
   ENDMETHOD.

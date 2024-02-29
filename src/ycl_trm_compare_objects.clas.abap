@@ -39,7 +39,9 @@ CLASS ycl_trm_compare_objects DEFINITION
 *        !it_objects          TYPE tyt_objects
         !it_objects          TYPE yif_trm_tr_object=>tab
       RETURNING
-        VALUE(rt_comparison) TYPE ty_t_comparison .
+        VALUE(rt_comparison) TYPE ty_t_comparison
+      RAISING
+        ycx_trm_transport_request.
   PROTECTED SECTION.
   PRIVATE SECTION.
 
@@ -118,6 +120,7 @@ CLASS ycl_trm_compare_objects IMPLEMENTATION.
       WHEN 0.
       WHEN 1.
         MESSAGE i008(tsys) WITH _rfc_compare_destination.
+        RAISE EXCEPTION NEW ycx_trm_transport_request(  ).
       WHEN OTHERS.
         MESSAGE i015(tsys).
     ENDCASE.

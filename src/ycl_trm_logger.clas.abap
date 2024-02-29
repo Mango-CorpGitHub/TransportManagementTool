@@ -20,12 +20,14 @@ CLASS ycl_trm_logger DEFINITION
       FOR yif_trm_logger~add_from_system_variables .
     ALIASES add_text
       FOR yif_trm_logger~add_text .
+    ALIASES add_from_ctsgerrmsg
+      FOR yif_trm_logger~add_from_ctsgerrmsg .
     ALIASES display
       FOR yif_trm_logger~display .
     ALIASES has_errors
       FOR yif_trm_logger~has_errors .
     ALIASES error
-        for yif_trm_logger~error.
+        FOR yif_trm_logger~error.
     ALIASES info
       FOR yif_trm_logger~info .
     ALIASES warning
@@ -170,6 +172,20 @@ CLASS ycl_trm_logger IMPLEMENTATION.
 
   ENDMETHOD.
 
+  METHOD yif_trm_logger~add_from_ctsgerrmsg.
+
+    LOOP AT im_t_ctsgerrmsgs ASSIGNING FIELD-SYMBOL(<ls_ctsgerrmsgs>).
+
+      add_message( im_s_message = VALUE #( msgid     = <ls_ctsgerrmsgs>-msgid
+                                           msgty     = <ls_ctsgerrmsgs>-msgty
+                                           msgno     = <ls_ctsgerrmsgs>-msgno
+                                           msgv1     = <ls_ctsgerrmsgs>-msgv1
+                                           msgv2     = <ls_ctsgerrmsgs>-msgv2
+                                           msgv3     = <ls_ctsgerrmsgs>-msgv3
+                                           msgv4     = <ls_ctsgerrmsgs>-msgv4 ) ).
+    ENDLOOP.
+
+  ENDMETHOD.
 
   METHOD yif_trm_logger~add_from_bapiret.
 
@@ -256,9 +272,9 @@ CLASS ycl_trm_logger IMPLEMENTATION.
               im_type = 'W' ).
   ENDMETHOD.
 
-  method yif_trm_logger~error.
+  METHOD yif_trm_logger~error.
     add_text( im_text = im_text
               im_type = 'E'
             ).
-  endmethod.
+  ENDMETHOD.
 ENDCLASS.
