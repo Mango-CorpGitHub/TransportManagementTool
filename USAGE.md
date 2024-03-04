@@ -51,7 +51,7 @@ A proposed name is included, along with the option to release the ToC request au
 
 **Developer A** will repeat this procedure as many times as needed to thoroughly test the functionality that have developed and receive confirmation that the changes are correct and should be taken to production. **Developer A** is aware of changes from **Developer B** (collisions) but does not require those other changes to be confirmed before transporting their own. **Developer A** will only move to Production the changes related to their specific development. In this step, **Developer A** is ready for executing the tool, entering their transport requests and changing the Destination mode on the selection screen radio-button.
 
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/149a4f80-9b00-4128-9721-e3390b3e2955)
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/e54b15ff-76d2-4f10-bd02-8641f3591bdd)
 
 
 In this mode, the information will be displayed in the same format explained earlier, continuing to show the componentes by object and conflicts with other developments. The main difference is that the tool will compare the objects against the production system, allowing identification of what has changed and what is new. It will be the user's task to decide which changes will be taken to the production environment, and the tool will provide all the information needed to make that decision. All functionalities previously described are present in this mode, except (logically) the button to create a Transport of Copies request, in its place, a "Release" button appears.
