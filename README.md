@@ -4,7 +4,13 @@ In ABAP development teams, it's common for programmers to collaborate on the sam
 
 ![MicrosoftTeams-image (1)](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/d201d7ea-ea49-483e-b3ad-708273f21192)
 
-When preparing a transport between environments, particular attention is required for objects containing code contributed by multiple developers, ensuring that only approved changes are included for deployment. This tool is designed to streamline and centralize tasks associated with transport requests such as having a full list for SAP objects with Collisions information, creating Transport of Copies requests, comparing objects across environments, collectively releasing request blocks, and more. When confronted with complex tasks, it enables programmers to make well-informed decisions based on the most accurate information.
+When preparing a transport between environments, particular attention is required for objects containing code contributed by multiple developers, ensuring that only approved changes are included for deployment. This tool is designed to streamline and centralize tasks associated with transport requests such as:
+- having a full list for SAP objects with Collisions information
+- creating Transport of Copies requests
+- comparing objects across environments
+- collectively releasing request blocks
+- ...
+  When confronted with complex tasks, it enables programmers to make well-informed decisions based on the most accurate information.
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/3e67a7c7-feaf-4c69-847a-dfc4eb8e1263)
 
