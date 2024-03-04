@@ -22,7 +22,7 @@ It is recommended to use the tool with the *"Compare Objects"* flag checked, eve
 
 The column that links each object to the lower part's ALV is the *Collision* column. The **Collision** concept identifies whether an object is present in more than one transport request. This serves as a warning that an object may have changes from another programmer and may require discarding those changes before transporting it to another environment. An object/subobject will be identified as having collisions with the Red icon in the *"Has Collisions"* column. If the icon in the column is green, it indicates that it has no collisions.
 
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/0568b199-1c3c-452b-8b84-67c9039aaa5f)
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/e9857145-6477-4f00-91b2-beeb146c28a1)
 
 The objects in the ALV will be sorted to display those with collisions first, as they require special attention.
 
