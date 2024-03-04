@@ -28,11 +28,14 @@ The objects in the ALV will be sorted to display those with collisions first, as
 
 The lower ALV (Collisions) will correspond to the list of transport requests that have collisions with the objects from the transport entered on the selection screen.
 
-Both ALVs are related through the toolbar. The idea is that if the user selects an object from the list, the Collisions ALV will be filtered to display only the requests with conflicts related to that specific component. In the same way, if the user selects a request from the collisions list, the ALV of objects will be filtered to display only those components that are present in that order. For doing this:
+Both ALVs are related through the toolbar. The idea is that if the user selects an object from the list, the Collisions ALV will be filtered to display only the requests with conflicts related to that specific component. In the same way, if the user selects a request from the collisions list, the ALV of objects will be filtered to display only those components that are present in that order. 
+Returning to the previously described use case, imagine a third developer(**Developer C**) that has included new changes related to another development. This generates a new collision.
 
-In TR Object ALV select an individual object and push button
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/b299e23c-e3fb-43f4-8f59-36d450ac2b27)
 
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/e74908ac-0371-41f4-bc70-3f334a278896)
+**Developer 1** wants to know how much collisions has an specific object. For doing this, **Developer 1** select that individual object in TR Object ALV and push button "Show object collisions"
+
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/81ad1e9c-8733-4aa9-9179-f76699c5bd5d)
 
 In Collisions ALV select an indiidual request and push button
 
