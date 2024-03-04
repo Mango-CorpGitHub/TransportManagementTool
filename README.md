@@ -10,7 +10,8 @@ When preparing a transport between environments, particular attention is require
 - comparing objects across environments
 - collectively releasing request blocks
 - ...
-  When confronted with complex tasks, it enables programmers to make well-informed decisions based on the most accurate information.
+
+When confronted with complex tasks, it enables programmers to make well-informed decisions based on the most accurate information.
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/3e67a7c7-feaf-4c69-847a-dfc4eb8e1263)
 
