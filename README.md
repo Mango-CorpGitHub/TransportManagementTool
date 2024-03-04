@@ -12,7 +12,7 @@ When preparing a transport between environments, particular attention is require
 *Made by ABAPers for ABAPers*.
 
 ## Installation
-Install this [project](INSTALL.md) via [ABAPGit](https://abapgit.org/). 
+Install this project via [ABAPGit](https://abapgit.org/). Quick installation [guide](INSTALL.md)
 
 Configure it following [Configuration Guide](CONFIGURATION.md). 
   
