@@ -33,13 +33,13 @@ Returning to the previously described use case, imagine a third developer(**Deve
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/b299e23c-e3fb-43f4-8f59-36d450ac2b27)
 
-**Developer 1** wants to know how many collisions has an specific object. For doing this, **Developer 1** select that individual object in TR Object ALV and push button "Show object collisions"
+**Developer A** wants to know how many collisions has an specific object. For doing this, **Developer A** select that individual object in TR Object ALV and push button "Show object collisions"
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/81ad1e9c-8733-4aa9-9179-f76699c5bd5d)
 
-In Collisions ALV select an indiidual request and push button
+**Developer A** also wants to know for collision, how many objects are afected by that. For doing this, **Developer A** select an individual transport request in Collisions ALV and push button "Show TR collisions"
 
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/2a6630dc-ca5e-4cdb-99a9-2e0c1682fd0e)
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/ee914428-2a2c-4c01-b07f-6f6da73d1636)
 
 The "Show all collisions" buttons will allow returning to the initial state and clearing any filtering.
 
