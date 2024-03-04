@@ -5,7 +5,7 @@ In ABAP development teams, it's common for programmers to collaborate on the sam
 Made by ABAPers for ABAPers.
 
 ## Installation
-Install this project via [ABAPGit](https://abapgit.org/). 
+Install this [project](INSTALL.md) via [ABAPGit](https://abapgit.org/). 
 
 Configure it following [Configuration Guide](CONFIGURATION.md). 
   
