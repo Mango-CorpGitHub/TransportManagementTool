@@ -33,7 +33,7 @@ Returning to the previously described use case, imagine a third developer(**Deve
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/b299e23c-e3fb-43f4-8f59-36d450ac2b27)
 
-**Developer 1** wants to know how much collisions has an specific object. For doing this, **Developer 1** select that individual object in TR Object ALV and push button "Show object collisions"
+**Developer 1** wants to know how many collisions has an specific object. For doing this, **Developer 1** select that individual object in TR Object ALV and push button "Show object collisions"
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/81ad1e9c-8733-4aa9-9179-f76699c5bd5d)
 
