@@ -56,7 +56,7 @@ A proposed name is included, along with the option to release the ToC request au
 
 In this mode, the information will be displayed in the same format explained earlier, continuing to show the components by object and conflicts with other developments. The main difference is that the tool will compare the objects against the production system, allowing identification of what has changed and what is new. It will be the user's task to decide which changes will be taken to the production environment, and the tool will provide all the information needed to make that decision. All functionalities previously described are present in this mode, except (logically) the button to create a Transport of Copies request, in its place, a "Release" button appears.
 
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/f14937a1-1c85-4222-983d-55407b23ffa7)
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/46218b6b-1319-43fa-a3b4-c200a87fa8bc)
 
 
 It is again advisable for **Developer A** to review the conflicts, identify which code should not be transported, and ensure the transport before releasing. Visually, there is a *"Reviewed"* column in ALV to provide an indicator of which objects have been checked. Once **Developer A** has removed the code that should not be included and is confident in their decision, *"Release"* button could be pushed. with this button, all the transport request entered on the selection screen will be released simultaneously and ready to be imported into the subsequent systems.
