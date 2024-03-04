@@ -4,7 +4,7 @@ In ABAP development teams, it's common for programmers to collaborate on the sam
 
 
 
-When preparing a transport between environments, particular attention is required for objects containing code contributed by multiple developers, ensuring that only approved changes are included for deployment. This tool is designed to streamline and centralize tasks associated with transport requests such as having a full list for SAP objects with Collisions information, creating transport copies, comparing objects across environments, collectively releasing request blocks, and more. When confronted with complex tasks, it enables programmers to make well-informed decisions based on the most accurate information.
+When preparing a transport between environments, particular attention is required for objects containing code contributed by multiple developers, ensuring that only approved changes are included for deployment. This tool is designed to streamline and centralize tasks associated with transport requests such as having a full list for SAP objects with Collisions information, creating Transport of Copies requests, comparing objects across environments, collectively releasing request blocks, and more. When confronted with complex tasks, it enables programmers to make well-informed decisions based on the most accurate information.
 
 Made by ABAPers for ABAPers.
 
