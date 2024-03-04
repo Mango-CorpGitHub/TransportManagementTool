@@ -9,7 +9,7 @@ When preparing a transport between environments, particular attention is require
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/716cfbd0-b585-439e-8efe-48d8ea463b5d)
 
 
-Made by ABAPers for ABAPers.
+*Made by ABAPers for ABAPers*.
 
 ## Installation
 Install this [project](INSTALL.md) via [ABAPGit](https://abapgit.org/). 
