@@ -11,7 +11,7 @@ It can be noted that the program operates in two modes, depending on the target 
 
 **Developer A** should enter their transport request(s) in the select-option *"Request/Task"* and mark the Quality destination. To fully utilize the tool's functionality, ensure that the "Compare objects" checkbox is also selected.  If the "Only my request" box is checked, the tool will verify if there is a Transport Request/Task among those entered that is not owned by the user executing the program, which is useful for error checking. Once executed, a screen similar to the following will be displayed:
 
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/590eaf0d-7073-4ef3-b9ef-3817ad6f672c)
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/716cfbd0-b585-439e-8efe-48d8ea463b5d)
 
 At a first glance, two ALVs can be seen, each one will show its own information.
 
