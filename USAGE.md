@@ -4,7 +4,7 @@
 **Developer A** needs to initially upload the changes from their development to the Quality system, with the purpose of verifying proper functionality with more test cases.
 For doing that **Developer A** excutes this Transport Management Tool. Selection screen will be as following:
 
-![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/0011595c-3cae-45e9-a775-accd6111aec7)
+![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/08d807ff-96c1-4597-a265-e6a75ab92939)
 
 It can be noted that the program operates in two modes, depending on the target system (Quality or Production) against which the transport is to be carried out. The information is presented in the same format in both modes; however, the options are adapted to the specific needs of the programmer in each mode. The check-box *"Compare Objects"* complements the information to be displayed.
 
