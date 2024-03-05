@@ -312,17 +312,17 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    DATA lt_texts TYPE STANDARD TABLE OF yc_transportrequesttext WITH DEFAULT KEY
+    DATA lt_pepe TYPE STANDARD TABLE OF yc_transportrequesttext WITH DEFAULT KEY
                                                                  WITH NON-UNIQUE SORTED KEY sorted_key COMPONENTS transportrequestid.
 
     SELECT trtext~*
       FROM yc_transportrequesttext AS trtext
        FOR ALL ENTRIES IN @im_t_transport_request
      WHERE trtext~transportrequestid = @im_t_transport_request-code
-      INTO TABLE @lt_texts.
+      INTO TABLE @lt_pepe.
 
     re_t_text = VALUE #( FOR <tr> IN im_t_transport_request ( code  = <tr>-code
-                                                              text = FILTER #( lt_texts USING KEY sorted_key WHERE transportrequestid = <tr>-code
+                                                              text = FILTER #( lt_pepe USING KEY sorted_key WHERE transportrequestid = <tr>-code
                                                                              )
                                                             )
                          ).
@@ -464,9 +464,9 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
       FROM yc_transportrequest     AS tr
        FOR ALL ENTRIES IN @im_t_transport_request
      WHERE tr~transportrequestid = @im_t_transport_request-code
-      INTO TABLE @DATA(lt_data).
+      INTO TABLE @DATA(lt_aag).
 
-    re_t_data = VALUE #( FOR <data> IN lt_data ( code = <data>-transportrequestid
+    re_t_data = VALUE #( FOR <data> IN lt_aag ( code = <data>-transportrequestid
                                                  data = <data> ) ).
   ENDMETHOD.
 
