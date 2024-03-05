@@ -29,21 +29,21 @@ The objects in the ALV will be sorted to display those with collisions first, as
 The lower ALV (Collisions) will correspond to the list of transport requests that have collisions with the objects from the transport entered on the selection screen.
 
 Both ALVs are related through the toolbar. The idea is that if the user selects an object from the list, the Collisions ALV will be filtered to display only the requests with conflicts related to that specific component. In the same way, if the user selects a request from the collisions list, the ALV of objects will be filtered to display only those components that are present in that order. 
-Returning to the previously described use case, imagine a third developer(**Developer C**) that has included new changes related to another development. This generates a new collision.
+Returning to the previously described use case, imagine a third developer(**Developer C**) that has included new changes linked to a third developmet. This situation will generate a new collision.
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/b299e23c-e3fb-43f4-8f59-36d450ac2b27)
 
-**Developer A** wants to know how many collisions has an specific object. For doing this, **Developer A** select that individual object in TR Object ALV and push button "Show object collisions"
+**Developer A** wants to know how many collisions an specific object has. For doing this, **Developer A** selects that individual object in TR Object ALV and push button "Show object collisions"
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/81ad1e9c-8733-4aa9-9179-f76699c5bd5d)
 
-**Developer A** also wants to know for collision, how many objects are afected by that. For doing this, **Developer A** select an individual transport request in Collisions ALV and push button "Show TR collisions"
+**Developer A** also wants to know for collision, how many objects are afected by it. For doing this, **Developer A** selects an individual transport request in Collisions ALV and push button "Show TR collisions"
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/ee914428-2a2c-4c01-b07f-6f6da73d1636)
 
 The "Show all collisions" buttons will allow returning to the initial state and clearing any filtering.
 
-It can be observed that **Developer A** has two objects colliding with other transport requests. **Developer A** will have to decide whether to include those changes from **Developer B** and **Developer C** in their transport to the Quality environment. For doing that, TR Object ALV has a *Compare Object* button for checking individual components with changes against destination system. Once **Developer A** has decided which changes to upload to Quality to test their development, the tool provides the capability to generate a Transport of Copy for this specific purpose. In Quality mode *"Create Transport of Copies"* button is available for that purpose. This button automatically creates a Transport of Copies request, released if the user wishes, with objects containing changes compared to Quality. By default, this tool will only include all new and modified components. However, it is also possible to manually select which objects from the ALV to include or exclude in the Transport of Copies request. This is possible thanks to the *"Add to ToC"* column. When  **Developer A** has decided which objects will be included and push the button, a popup like this will be shown:
+It can be observed that **Developer A** has two objects colliding with two sets of transport requests. **Developer A** will have to decide whether to include those changes from **Developer B** and **Developer C** in their transport to the Quality environment. For doing that, TR Object ALV has a *Compare Object* button for checking individual components with changes against destination system. Once **Developer A** has decided which changes to upload to Quality to test their development (the programmer has the responsability of removing unwanted code that does not belong; the tool will not eliminate any code blocks), the tool provides the capability to generate a Transport of Copy for this specific purpose. In Quality mode *"Create Transport of Copies"* button is available for that purpose. This button automatically creates a Transport of Copies request, released if the user wishes, with objects containing changes compared to Quality. By default, this tool will only include all new and modified components. However, it is also possible to manually select which objects from the ALV to include or exclude in the Transport of Copies request. This is possible thanks to the *"Add to ToC"* column. When  **Developer A** has decided which objects will be included and push the button, a popup like this will be shown:
 
 ![image](https://github.com/Mango-CorpGitHub/TransportManagementTool/assets/158566836/3693da7a-e9e4-4c09-b4ef-15a30817e475)
 
