@@ -6,6 +6,7 @@
     <DDLNAME>YI_TRANSPORTREQUESTCUSTOKEY</DDLNAME>
     <DDLANGUAGE>E</DDLANGUAGE>
     <DDTEXT>CDS for Transport Request Customizing Keys</DDTEXT>
+    <SOURCE_TYPE>V</SOURCE_TYPE>
    </DDLS>
   </asx:values>
  </asx:abap>

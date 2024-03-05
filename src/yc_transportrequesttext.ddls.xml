@@ -6,6 +6,7 @@
     <DDLNAME>YC_TRANSPORTREQUESTTEXT</DDLNAME>
     <DDLANGUAGE>E</DDLANGUAGE>
     <DDTEXT>Description for Transportation Request Texts</DDTEXT>
+    <SOURCE_TYPE>V</SOURCE_TYPE>
    </DDLS>
   </asx:values>
  </asx:abap>

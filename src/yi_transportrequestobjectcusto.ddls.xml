@@ -6,6 +6,7 @@
     <DDLNAME>YI_TRANSPORTREQUESTOBJECTCUSTO</DDLNAME>
     <DDLANGUAGE>E</DDLANGUAGE>
     <DDTEXT>Transport Request Object Customizing</DDTEXT>
+    <SOURCE_TYPE>V</SOURCE_TYPE>
    </DDLS>
   </asx:values>
  </asx:abap>

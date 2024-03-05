@@ -362,16 +362,16 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    DATA lt_code TYPE yif_trm_transport_request_db~typ_t_code.
+    DATA lt_palau TYPE yif_trm_transport_request_db~typ_t_code.
 
     SELECT tr~transportrequestid AS code
       FROM yc_transportrequest AS tr
        FOR ALL ENTRIES IN @im_t_transport_request
      WHERE tr~transportrequestid EQ @im_t_transport_request-code
-      INTO TABLE @lt_code.
+      INTO TABLE @lt_palau.
 
     re_t_exists = VALUE #( FOR <tr> IN im_t_transport_request ( code   = <tr>-code
-                                                                exists = COND #( WHEN line_exists( lt_code[ KEY sorted_key code = <tr>-code ] )
+                                                                exists = COND #( WHEN line_exists( lt_palau[ KEY sorted_key code = <tr>-code ] )
                                                                                 THEN abap_true
                                                                                 ELSE abap_false
                                                                                )
@@ -414,17 +414,17 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    DATA lt_entries TYPE STANDARD TABLE OF yc_transportrequestobject WITH DEFAULT KEY
+    DATA lt_hangar TYPE STANDARD TABLE OF yc_transportrequestobject WITH DEFAULT KEY
                                                                      WITH NON-UNIQUE SORTED KEY sorted_key COMPONENTS transportrequestid.
 
     SELECT trentries~*
       FROM yc_transportrequestobject AS trentries
        FOR ALL ENTRIES IN @im_t_transport_request
      WHERE trentries~transportrequestid = @im_t_transport_request-code
-      INTO TABLE @lt_entries.
+      INTO TABLE @lt_hangar.
 
     re_t_entries = VALUE #( FOR <tr> IN im_t_transport_request ( code    = <tr>-code
-                                                                 entries = FILTER #( lt_entries USING KEY sorted_key WHERE transportrequestid = <tr>-code ) ) ).
+                                                                 entries = FILTER #( lt_hangar USING KEY sorted_key WHERE transportrequestid = <tr>-code ) ) ).
   ENDMETHOD.
 
 
@@ -503,17 +503,17 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    DATA lt_entries TYPE STANDARD TABLE OF yc_transportrequestobjectcusto WITH DEFAULT KEY
+    DATA lt_llica TYPE STANDARD TABLE OF yc_transportrequestobjectcusto WITH DEFAULT KEY
                                                                           WITH NON-UNIQUE SORTED KEY sorted_key COMPONENTS transportrequestid.
 
     SELECT trcustoentries~*
       FROM yc_transportrequestobjectcusto AS trcustoentries
        FOR ALL ENTRIES IN @im_t_transport_request
      WHERE trcustoentries~transportrequestid = @im_t_transport_request-code
-      INTO TABLE @lt_entries.
+      INTO TABLE @lt_llica.
 
     re_t_custo_entries = VALUE #( FOR <tr> IN im_t_transport_request ( code    = <tr>-code
-                                                                       entries = FILTER #( lt_entries USING KEY sorted_key WHERE transportrequestid = <tr>-code ) ) ).
+                                                                       entries = FILTER #( lt_llica USING KEY sorted_key WHERE transportrequestid = <tr>-code ) ) ).
   ENDMETHOD.
 
 

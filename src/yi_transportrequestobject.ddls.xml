@@ -6,6 +6,7 @@
     <DDLNAME>YI_TRANSPORTREQUESTOBJECT</DDLNAME>
     <DDLANGUAGE>E</DDLANGUAGE>
     <DDTEXT>Objects from a Transport Request</DDTEXT>
+    <SOURCE_TYPE>V</SOURCE_TYPE>
    </DDLS>
   </asx:values>
  </asx:abap>
