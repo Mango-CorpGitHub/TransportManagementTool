@@ -87,236 +87,7 @@ ENDCLASS.
 
 
 
-CLASS ycl_trm_transport_request IMPLEMENTATION.
-
-
-  METHOD yif_trm_transport_request~unlock.
-
-    CALL FUNCTION 'DEQUEUE_E_TRKORR'
-      EXPORTING
-        trkorr = ai_code.
-
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~release.
-
-    " First: Release all tasks
-    DATA(lt_task) = me->yif_trm_transport_request~get_tasks(  ).
-    IF im_release_tasks EQ abap_true AND lines( lt_task ) > 0.
-
-      LOOP AT lt_task ASSIGNING FIELD-SYMBOL(<lo_task>).
-        <lo_task>->release(  ).
-      ENDLOOP.
-
-    ENDIF.
-
-    DATA(lv_trokrr) = me->yif_trm_transport_request~get_code( ).
-    " Second: Release Transport Request
-    CALL FUNCTION 'TRINT_RELEASE_REQUEST'
-      EXPORTING
-        iv_trkorr                  = lv_trokrr
-        iv_dialog                  = space
-        iv_without_locking         = abap_true
-      EXCEPTIONS
-        cts_initialization_failure = 1
-        enqueue_failed             = 2
-        no_authorization           = 3
-        invalid_request            = 4
-        request_already_released   = 5
-        repeat_too_early           = 6
-        error_in_export_methods    = 7
-        object_check_error         = 8
-        docu_missing               = 9
-        db_access_error            = 10
-        action_aborted_by_user     = 11
-        export_failed              = 12
-        OTHERS                     = 13.
-
-    IF sy-subrc IS INITIAL.
-*      ai_o_log->info( |{ lv_trokrr } has been released| ).
-    ELSE.
-      ai_o_log->warning( |{ lv_trokrr } could not be released| ).
-      RETURN.
-    ENDIF.
-
-    IF im_check_released EQ abap_false.
-      RETURN.
-    ENDIF.
-
-    " Check if Transport Request is released
-    DO.
-
-      IF yif_trm_transport_request~is_released(  ).
-
-        ai_o_log->info( |{ lv_trokrr } has been released| ).
-        RETURN.
-
-      ENDIF.
-
-    ENDDO.
-
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~lock.
-
-    CALL FUNCTION 'ENQUEUE_E_TRKORR'
-      EXPORTING
-        trkorr         = ai_code
-      EXCEPTIONS
-        foreign_lock   = 1
-        system_failure = 2.
-    IF sy-subrc IS NOT INITIAL.
-      DATA(lx_tr) = transport_request_exception( ycx_trm_transport_request=>is_locked ).
-
-      RAISE EXCEPTION lx_tr.
-
-    ENDIF.
-
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~is_task.
-    re_is_task = COND #( WHEN as_o_db_interface->fetch_data( me )-transportrequestparentid IS INITIAL
-                         THEN abap_false
-                         ELSE abap_true
-                       ).
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~is_released.
-
-    as_o_db_interface->set_ignore_cache( abap_true ).
-
-    re_is_released = COND #( WHEN yif_trm_transport_request~get_status( ) EQ yif_trm_transport_request=>status-release OR
-                                  yif_trm_transport_request~get_status( ) EQ yif_trm_transport_request=>status-release_with_import_protection
-                             THEN abap_true
-                             ELSE abap_false
-                           ).
-
-    as_o_db_interface->set_ignore_cache( abap_false ).
-
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~get_type.
-    re_type = as_o_db_interface->fetch_data( me )-transportrequesttype.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~get_tasks.
-    DATA(lt_task) = ycl_trm_transport_request=>get_by_attributes( im_s_query_by_attr = VALUE #( parentid = VALUE #( ( sign = 'I' option = 'EQ' low = me->ai_code ) ) ) ).
-
-    re_t_task = VALUE #( FOR task IN lt_task ( NEW ycl_trm_tr_task(
-                                                     im_code            = task->get_code( )
-                                                     im_o_parent_logger = ai_o_log
-                                                    )
-                                             )
-                       ).
-
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~get_target.
-    re_target = as_o_db_interface->fetch_data( me )-transportrequesttarget.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~get_status.
-    re_status = as_o_db_interface->fetch_data( me )-transportrequeststatus.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~get_owner.
-    DATA: ls_address TYPE bapiaddr3,
-          lt_return  TYPE STANDARD TABLE OF bapiret2.
-
-    CLEAR: ex_name.
-
-    re_owner = as_o_db_interface->fetch_data( me )-transportrequestowner.
-
-    CALL FUNCTION 'BAPI_USER_GET_DETAIL'
-      EXPORTING
-        username = re_owner
-      IMPORTING
-        address  = ls_address
-      TABLES
-        return   = lt_return.
-
-    IF ls_address IS NOT INITIAL.
-      ex_name = ls_address-fullname.
-    ENDIF.
-
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~get_last_change_time.
-    re_last_change_time = as_o_db_interface->fetch_data( me )-lastchangetime.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~get_last_change_date.
-    re_last_change_date = as_o_db_interface->fetch_data( me )-lastchangedate.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~get_entry.
-    re_o_entry = NEW ycl_trm_tr_object(
-      im_code           = ai_code
-      im_position       = im_position
-      im_o_log          = ai_o_log
-      im_o_db_interface = get_db_interface(  )
-    ).
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~get_entries.
-
-    DATA(lt_entries) = as_o_db_interface->fetch_entries( im_o_transport_request = me ).
-
-    re_t_entries = VALUE #( FOR entry IN lt_entries
-                            ( yif_trm_transport_request~get_entry( entry-transportrequestposition ) )
-                          ).
-
-    IF im_include_task_objects EQ abap_true.
-
-      re_t_entries = VALUE #( BASE re_t_entries FOR task IN yif_trm_transport_request~get_tasks(  )
-                                                FOR entry_task IN task->yif_trm_transport_request~get_entries(  )
-                                                ( entry_task )
-                            ).
-
-
-    ENDIF.
-
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~get_description.
-    DATA(lt_description) = as_o_db_interface->fetch_text( me ).
-
-    IF lt_description IS INITIAL.
-      RETURN.
-    ENDIF.
-
-    ASSIGN lt_description[ language = im_language ] TO FIELD-SYMBOL(<description>).
-    IF sy-subrc IS INITIAL.
-      re_description = <description>-description.
-    ELSE.
-      re_description = lt_description[ 1 ]-description.
-    ENDIF.
-
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~get_code.
-    re_code = ai_code.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request~get_category.
-    re_category = as_o_db_interface->fetch_data( me )-transportrequestcategory.
-  ENDMETHOD.
+CLASS YCL_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
 
 
   METHOD yif_trm_transport_request~add_to_queue.
@@ -452,6 +223,7 @@ CLASS ycl_trm_transport_request IMPLEMENTATION.
                                obj_name = <ls_trmess_int>-msgv3.
           IF sy-subrc IS NOT INITIAL.
             DELETE lt_e071 WHERE obj_name = <ls_trmess_int>-msgv1.
+            DELETE lt_e071 WHERE obj_name = <ls_trmess_int>-msgv2.
           ENDIF.
 
           DELETE lt_e071k WHERE pgmid    = <ls_trmess_int>-msgv1  AND
@@ -539,26 +311,21 @@ CLASS ycl_trm_transport_request IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD get_by_attributes.
+  METHOD constructor.
+    ai_o_log = im_o_logger.
+    ai_code = im_code.
+    as_o_db_interface = get_db_interface( ).
 
-    DATA(lt_codes) = get_db_interface(  )->query_tr_data_by_attr( im_s_query_by_attr ).
+    IF NOT as_o_db_interface->check_exists( me ).
+      DATA(lx_tr)  = transport_request_exception( ycx_trm_transport_request=>not_exists ).
 
-    DATA(lt_data) = get_db_interface(  )->fetch_data_list( lt_codes ).
-
-    re_t_transport_request = VALUE #( FOR data IN lt_data ( ycl_trm_transport_request=>get_by_code( im_code = data-code
-                                                                                                    im_o_parent_logger = im_o_parent_logger
-                                                                                                   )
-                                                           )
-                                    ).
-
-    IF im_s_load_cache_params IS NOT INITIAL.
-      load_cache(
-        EXPORTING
-          im_t_codes             = lt_codes
-          im_s_load_cache_params = im_s_load_cache_params
-*            im_language            = SY-LANGU
-      ).
+      RAISE EXCEPTION lx_tr.
     ENDIF.
+  ENDMETHOD.
+
+
+  METHOD clear_cache.
+    get_db_interface(  )->clear_cache(  ).
   ENDMETHOD.
 
 
@@ -593,21 +360,26 @@ CLASS ycl_trm_transport_request IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD constructor.
-    ai_o_log = im_o_logger.
-    ai_code = im_code.
-    as_o_db_interface = get_db_interface( ).
+  METHOD get_by_attributes.
 
-    IF NOT as_o_db_interface->check_exists( me ).
-      DATA(lx_tr)  = transport_request_exception( ycx_trm_transport_request=>not_exists ).
+    DATA(lt_codes) = get_db_interface(  )->query_tr_data_by_attr( im_s_query_by_attr ).
 
-      RAISE EXCEPTION lx_tr.
+    DATA(lt_data) = get_db_interface(  )->fetch_data_list( lt_codes ).
+
+    re_t_transport_request = VALUE #( FOR data IN lt_data ( ycl_trm_transport_request=>get_by_code( im_code = data-code
+                                                                                                    im_o_parent_logger = im_o_parent_logger
+                                                                                                   )
+                                                           )
+                                    ).
+
+    IF im_s_load_cache_params IS NOT INITIAL.
+      load_cache(
+        EXPORTING
+          im_t_codes             = lt_codes
+          im_s_load_cache_params = im_s_load_cache_params
+*            im_language            = SY-LANGU
+      ).
     ENDIF.
-  ENDMETHOD.
-
-
-  METHOD clear_cache.
-    get_db_interface(  )->clear_cache(  ).
   ENDMETHOD.
 
 
@@ -646,5 +418,234 @@ CLASS ycl_trm_transport_request IMPLEMENTATION.
       DATA(lx_tr) = transport_request_exception( ycx_trm_transport_request=>entry_not_deleted ).
       RAISE EXCEPTION lx_tr.
     ENDIF.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~get_category.
+    re_category = as_o_db_interface->fetch_data( me )-transportrequestcategory.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~get_code.
+    re_code = ai_code.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~get_description.
+    DATA(lt_description) = as_o_db_interface->fetch_text( me ).
+
+    IF lt_description IS INITIAL.
+      RETURN.
+    ENDIF.
+
+    ASSIGN lt_description[ language = im_language ] TO FIELD-SYMBOL(<description>).
+    IF sy-subrc IS INITIAL.
+      re_description = <description>-description.
+    ELSE.
+      re_description = lt_description[ 1 ]-description.
+    ENDIF.
+
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~get_entries.
+
+    DATA(lt_entries) = as_o_db_interface->fetch_entries( im_o_transport_request = me ).
+
+    re_t_entries = VALUE #( FOR entry IN lt_entries
+                            ( yif_trm_transport_request~get_entry( entry-transportrequestposition ) )
+                          ).
+
+    IF im_include_task_objects EQ abap_true.
+
+      re_t_entries = VALUE #( BASE re_t_entries FOR task IN yif_trm_transport_request~get_tasks(  )
+                                                FOR entry_task IN task->yif_trm_transport_request~get_entries(  )
+                                                ( entry_task )
+                            ).
+
+
+    ENDIF.
+
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~get_entry.
+    re_o_entry = NEW ycl_trm_tr_object(
+      im_code           = ai_code
+      im_position       = im_position
+      im_o_log          = ai_o_log
+      im_o_db_interface = get_db_interface(  )
+    ).
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~get_last_change_date.
+    re_last_change_date = as_o_db_interface->fetch_data( me )-lastchangedate.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~get_last_change_time.
+    re_last_change_time = as_o_db_interface->fetch_data( me )-lastchangetime.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~get_owner.
+    DATA: ls_address TYPE bapiaddr3,
+          lt_return  TYPE STANDARD TABLE OF bapiret2.
+
+    CLEAR: ex_name.
+
+    re_owner = as_o_db_interface->fetch_data( me )-transportrequestowner.
+
+    CALL FUNCTION 'BAPI_USER_GET_DETAIL'
+      EXPORTING
+        username = re_owner
+      IMPORTING
+        address  = ls_address
+      TABLES
+        return   = lt_return.
+
+    IF ls_address IS NOT INITIAL.
+      ex_name = ls_address-fullname.
+    ENDIF.
+
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~get_status.
+    re_status = as_o_db_interface->fetch_data( me )-transportrequeststatus.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~get_target.
+    re_target = as_o_db_interface->fetch_data( me )-transportrequesttarget.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~get_tasks.
+    DATA(lt_task) = ycl_trm_transport_request=>get_by_attributes( im_s_query_by_attr = VALUE #( parentid = VALUE #( ( sign = 'I' option = 'EQ' low = me->ai_code ) ) ) ).
+
+    re_t_task = VALUE #( FOR task IN lt_task ( NEW ycl_trm_tr_task(
+                                                     im_code            = task->get_code( )
+                                                     im_o_parent_logger = ai_o_log
+                                                    )
+                                             )
+                       ).
+
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~get_type.
+    re_type = as_o_db_interface->fetch_data( me )-transportrequesttype.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~is_released.
+
+    as_o_db_interface->set_ignore_cache( abap_true ).
+
+    re_is_released = COND #( WHEN yif_trm_transport_request~get_status( ) EQ yif_trm_transport_request=>status-release OR
+                                  yif_trm_transport_request~get_status( ) EQ yif_trm_transport_request=>status-release_with_import_protection
+                             THEN abap_true
+                             ELSE abap_false
+                           ).
+
+    as_o_db_interface->set_ignore_cache( abap_false ).
+
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~is_task.
+    re_is_task = COND #( WHEN as_o_db_interface->fetch_data( me )-transportrequestparentid IS INITIAL
+                         THEN abap_false
+                         ELSE abap_true
+                       ).
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~lock.
+
+    CALL FUNCTION 'ENQUEUE_E_TRKORR'
+      EXPORTING
+        trkorr         = ai_code
+      EXCEPTIONS
+        foreign_lock   = 1
+        system_failure = 2.
+    IF sy-subrc IS NOT INITIAL.
+      DATA(lx_tr) = transport_request_exception( ycx_trm_transport_request=>is_locked ).
+
+      RAISE EXCEPTION lx_tr.
+
+    ENDIF.
+
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~release.
+
+    " First: Release all tasks
+    DATA(lt_task) = me->yif_trm_transport_request~get_tasks(  ).
+    IF im_release_tasks EQ abap_true AND lines( lt_task ) > 0.
+
+      LOOP AT lt_task ASSIGNING FIELD-SYMBOL(<lo_task>).
+        <lo_task>->release(  ).
+      ENDLOOP.
+
+    ENDIF.
+
+    DATA(lv_trokrr) = me->yif_trm_transport_request~get_code( ).
+    " Second: Release Transport Request
+    CALL FUNCTION 'TRINT_RELEASE_REQUEST'
+      EXPORTING
+        iv_trkorr                  = lv_trokrr
+        iv_dialog                  = space
+        iv_without_locking         = abap_true
+      EXCEPTIONS
+        cts_initialization_failure = 1
+        enqueue_failed             = 2
+        no_authorization           = 3
+        invalid_request            = 4
+        request_already_released   = 5
+        repeat_too_early           = 6
+        error_in_export_methods    = 7
+        object_check_error         = 8
+        docu_missing               = 9
+        db_access_error            = 10
+        action_aborted_by_user     = 11
+        export_failed              = 12
+        OTHERS                     = 13.
+
+    IF sy-subrc IS INITIAL.
+*      ai_o_log->info( |{ lv_trokrr } has been released| ).
+    ELSE.
+      ai_o_log->warning( |{ lv_trokrr } could not be released| ).
+      RETURN.
+    ENDIF.
+
+    IF im_check_released EQ abap_false.
+      RETURN.
+    ENDIF.
+
+    " Check if Transport Request is released
+    DO.
+
+      IF yif_trm_transport_request~is_released(  ).
+
+        ai_o_log->info( |{ lv_trokrr } has been released| ).
+        RETURN.
+
+      ENDIF.
+
+    ENDDO.
+
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request~unlock.
+
+    CALL FUNCTION 'DEQUEUE_E_TRKORR'
+      EXPORTING
+        trkorr = ai_code.
+
   ENDMETHOD.
 ENDCLASS.

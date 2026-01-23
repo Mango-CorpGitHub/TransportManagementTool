@@ -5,7 +5,7 @@
    <VSEOCLASS>
     <CLSNAME>YCL_TRM_GET_OBJECTS_W_COLISION</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Obtain objects with colisions with other TR</DESCRIPT>
+    <DESCRIPT>Obtain objects with colisions based on selection screen</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>

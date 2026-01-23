@@ -1,5 +1,5 @@
 INTERFACE yif_trm_logger
-  PUBLIC .
+  PUBLIC.
 
   CONSTANTS:
     BEGIN OF msgty,
@@ -11,20 +11,19 @@ INTERFACE yif_trm_logger
       none    TYPE symsgty VALUE '-',
     END OF msgty.
 
-  TYPES:
-    tab TYPE STANDARD TABLE OF REF TO yif_trm_logger WITH DEFAULT KEY .
+  TYPES tab TYPE STANDARD TABLE OF REF TO yif_trm_logger WITH DEFAULT KEY.
 
   METHODS add_text IMPORTING im_text TYPE csequence
-                             im_type TYPE symsgty.
+                             im_type TYPE symsgty DEFAULT 'E'.
 
   METHODS add_exception IMPORTING im_o_exception TYPE REF TO cx_root
                                   im_type        TYPE symsgty.
 
-  METHODS add_message IMPORTING im_s_message  TYPE bal_s_msg.
+  METHODS add_message         IMPORTING im_s_message     TYPE bal_s_msg.
 
-  METHODS add_from_bapiret IMPORTING im_t_bapiret TYPE bapiret2_t.
+  METHODS add_from_bapiret    IMPORTING im_t_bapiret     TYPE bapiret2_t.
 
-  METHODS add_from_stmscalert IMPORTING im_s_stmscalert TYPE stmscalert.
+  METHODS add_from_stmscalert IMPORTING im_s_stmscalert  TYPE stmscalert.
 
   METHODS add_from_ctsgerrmsg IMPORTING im_t_ctsgerrmsgs TYPE ctsgerrmsgs.
 
@@ -36,11 +35,12 @@ INTERFACE yif_trm_logger
   METHODS has_messages
     RETURNING VALUE(rv_has_messages) TYPE abap_bool.
 
-  METHODS display.
+  METHODS display
+    IMPORTING iv_delete_messages_after TYPE abap_bool DEFAULT abap_true.
 
-  METHODS info IMPORTING im_text TYPE csequence.
+  METHODS info    IMPORTING im_text TYPE csequence.
 
-  METHODS error IMPORTING im_text TYPE csequence.
+  METHODS error   IMPORTING im_text TYPE csequence.
 
   METHODS warning IMPORTING im_text TYPE csequence.
 

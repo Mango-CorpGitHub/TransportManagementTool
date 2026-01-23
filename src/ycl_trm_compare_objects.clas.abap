@@ -55,7 +55,7 @@ ENDCLASS.
 
 
 
-CLASS ycl_trm_compare_objects IMPLEMENTATION.
+CLASS YCL_TRM_COMPARE_OBJECTS IMPLEMENTATION.
 
 
   METHOD compare.
@@ -165,7 +165,9 @@ CLASS ycl_trm_compare_objects IMPLEMENTATION.
 
     DATA lr_objects_id_to_be_added TYPE RANGE OF ty_s_objects-object.
     lr_objects_id_to_be_added = VALUE #(
-      ( sign = 'I' option = 'EQ' low = 'LANG' ) ).
+      ( sign = 'I' option = 'EQ' low = 'LANG' )
+      ( sign = 'I' option = 'EQ' low = 'TRAN' )
+       ).
 
     LOOP AT it_objects ASSIGNING FIELD-SYMBOL(<lo_objects>).
 

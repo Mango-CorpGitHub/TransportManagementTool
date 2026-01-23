@@ -40,29 +40,6 @@
        <INPUT_FLD>X</INPUT_FLD>
       </RPY_DYFATC>
      </FIELDS>
-     <FLOW_LOGIC>
-      <RPY_DYFLOW>
-       <LINE>PROCESS BEFORE OUTPUT.</LINE>
-      </RPY_DYFLOW>
-      <RPY_DYFLOW>
-       <LINE> MODULE STATUS_0100.</LINE>
-      </RPY_DYFLOW>
-      <RPY_DYFLOW>
-       <LINE>  MODULE RUN_APP.</LINE>
-      </RPY_DYFLOW>
-      <RPY_DYFLOW>
-       <LINE>PROCESS AFTER INPUT.</LINE>
-      </RPY_DYFLOW>
-      <RPY_DYFLOW>
-       <LINE>* MODULE USER_COMMAND_0100.</LINE>
-      </RPY_DYFLOW>
-      <RPY_DYFLOW>
-       <LINE>  MODULE EXIT_COMMAND.</LINE>
-      </RPY_DYFLOW>
-      <RPY_DYFLOW>
-       <LINE>  MODULE EXIT_COMMAND AT EXIT-COMMAND.</LINE>
-      </RPY_DYFLOW>
-     </FLOW_LOGIC>
     </item>
    </DYNPROS>
    <CUA>
@@ -1660,9 +1637,21 @@
      <LENGTH>46</LENGTH>
     </item>
     <item>
+     <ID>I</ID>
+     <KEY>T04</KEY>
+     <ENTRY>Collision with...</ENTRY>
+     <LENGTH>27</LENGTH>
+    </item>
+    <item>
      <ID>R</ID>
      <ENTRY>Transport Tool 2.0</ENTRY>
      <LENGTH>18</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_COLL</KEY>
+     <ENTRY>Normal Collisions</ENTRY>
+     <LENGTH>25</LENGTH>
     </item>
     <item>
      <ID>S</ID>
@@ -1678,12 +1667,6 @@
     </item>
     <item>
      <ID>S</ID>
-     <KEY>P_DEST</KEY>
-     <ENTRY>System RFC</ENTRY>
-     <LENGTH>18</LENGTH>
-    </item>
-    <item>
-     <ID>S</ID>
      <KEY>P_OWNER</KEY>
      <ENTRY>Owner</ENTRY>
      <LENGTH>13</LENGTH>
@@ -1693,12 +1676,6 @@
      <KEY>P_USR</KEY>
      <ENTRY>Only my own orders</ENTRY>
      <LENGTH>26</LENGTH>
-    </item>
-    <item>
-     <ID>S</ID>
-     <KEY>RB_OTH</KEY>
-     <ENTRY>Others</ENTRY>
-     <LENGTH>14</LENGTH>
     </item>
     <item>
      <ID>S</ID>
@@ -1714,9 +1691,30 @@
     </item>
     <item>
      <ID>S</ID>
+     <KEY>S_AS4DA</KEY>
+     <ENTRY>.</ENTRY>
+     <LENGTH>12</LENGTH>
+     <SPLIT>D</SPLIT>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>S_TRFUN</KEY>
+     <ENTRY>.</ENTRY>
+     <LENGTH>28</LENGTH>
+     <SPLIT>D</SPLIT>
+    </item>
+    <item>
+     <ID>S</ID>
      <KEY>S_TRKORR</KEY>
-     <ENTRY>Request/Task</ENTRY>
+     <ENTRY>Request</ENTRY>
      <LENGTH>20</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>S_TRSTA</KEY>
+     <ENTRY>.</ENTRY>
+     <LENGTH>14</LENGTH>
+     <SPLIT>D</SPLIT>
     </item>
    </TPOOL>
    <I18N_TPOOL>

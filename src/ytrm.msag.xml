@@ -109,6 +109,18 @@
      <MSGNR>017</MSGNR>
      <TEXT>At least one task is not from user &amp;1</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>018</MSGNR>
+     <TEXT>Method &amp;1 not exist in &amp;2</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>019</MSGNR>
+     <TEXT>Not objects found to analyze dependencies</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

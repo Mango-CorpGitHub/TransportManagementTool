@@ -9,6 +9,9 @@ INCLUDE ytrm_version_tool_v2_top.
 INCLUDE ytrm_version_tool_v2_clas.
 
 DATA lv_trkorr TYPE e070-trkorr.
+DATA lv_trfunction TYPE e070-trfunction.
+DATA lv_trstatus TYPE e070-trstatus.
+DATA lv_as4date TYPE e070-as4date.
 DATA lr_user   TYPE lcl_sh_for_transport_request=>ty_r_users.
 
 SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE TEXT-t01.
@@ -35,6 +38,14 @@ SELECTION-SCREEN BEGIN OF BLOCK b2 WITH FRAME TITLE TEXT-t02.
   PARAMETERS rb_q   RADIOBUTTON GROUP rad USER-COMMAND frad1 DEFAULT 'X'.
   PARAMETERS rb_p   RADIOBUTTON GROUP rad.
 SELECTION-SCREEN END OF BLOCK b2.
+
+*SELECTION-SCREEN BEGIN OF BLOCK b3 WITH FRAME TITLE TEXT-t04.
+*  PARAMETERS p_coll TYPE abap_bool AS CHECKBOX USER-COMMAND p_coll DEFAULT abap_true .
+  SELECT-OPTIONS s_trfun FOR lv_trfunction NO-DISPLAY.
+  SELECT-OPTIONS s_trsta FOR lv_trstatus NO-DISPLAY.
+  SELECT-OPTIONS s_as4da FOR lv_as4date NO-DISPLAY.
+*SELECTION-SCREEN END OF BLOCK b3.
+
 
 INCLUDE ytrm_version_tool_v2_sc.
 

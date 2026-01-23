@@ -58,253 +58,7 @@ ENDCLASS.
 
 
 
-CLASS ycl_trm_transport_request_db IMPLEMENTATION.
-
-
-  METHOD yif_trm_transport_request_db~set_ignore_cache.
-    ai_ignore_cache = im_ignore_cache.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request_db~query_tr_data_by_attr.
-
-    IF im_s_tr_query_by_attr IS INITIAL.
-      RETURN.
-    ENDIF.
-
-    DATA(lv_query) = |tr~transportrequestid             IN @im_s_tr_query_by_attr-transportrequestid| &&
-                     | AND tr~transportrequesttype      IN @im_s_tr_query_by_attr-type|               &&
-                     | AND tr~transportrequestcategory  IN @im_s_tr_query_by_attr-category|           &&
-                     | AND tr~transportrequestowner     IN @im_s_tr_query_by_attr-owner|              &&
-                     | AND tr~transportrequeststatus    IN @im_s_tr_query_by_attr-status|             &&
-                     | AND tr~lastchangedate            IN @im_s_tr_query_by_attr-lastchangedate|     &&
-                     | AND tr~lastchangetime            IN @im_s_tr_query_by_attr-lastchangetime|     &&
-                     | AND tr~transportrequestparentid  IN @im_s_tr_query_by_attr-parentid| .
-
-
-    IF im_s_tr_query_by_attr-entries_attr IS INITIAL.
-
-      IF im_s_tr_query_by_attr-code IS NOT INITIAL.
-        SELECT tr~transportrequestid
-          FROM yc_transportrequest AS tr
-           FOR ALL ENTRIES IN @im_s_tr_query_by_attr-code
-         WHERE tr~transportrequestid EQ @im_s_tr_query_by_attr-code-code
-           AND (lv_query)
-          INTO TABLE @DATA(lt_code).
-      ELSE.
-        SELECT tr~transportrequestid
-          FROM yc_transportrequest AS tr
-         WHERE (lv_query)
-         INTO TABLE @lt_code.
-      ENDIF.
-
-    ELSE.
-      lv_query = lv_query &&
-                 | AND trobj~objectid   IN @im_s_tr_query_by_attr-entries_attr-objectid|     &&
-                 | AND trobj~ObjectType IN @im_s_tr_query_by_attr-entries_attr-ObjectType|   &&
-                 | AND trobj~ObjectName IN @im_s_tr_query_by_attr-entries_attr-ObjectName|   &&
-                 | AND trobj~LockStatus IN @im_s_tr_query_by_attr-entries_attr-LockStatus|.
-
-
-      IF im_s_tr_query_by_attr-code IS NOT INITIAL.
-        SELECT tr~transportrequestid
-          FROM yc_transportrequest AS tr
-         INNER JOIN yc_transportrequestobject AS trobj
-            ON tr~transportrequestid EQ trobj~transportrequestid
-           FOR ALL ENTRIES IN @im_s_tr_query_by_attr-code
-         WHERE tr~transportrequestid EQ @im_s_tr_query_by_attr-code-code
-           AND (lv_query)
-          INTO TABLE @DATA(lt_code_obj).
-      ELSE.
-        SELECT tr~transportrequestid
-          FROM yc_transportrequest AS tr
-         INNER JOIN yc_transportrequestobject AS trobj
-            ON tr~transportrequestid EQ trobj~transportrequestid
-         WHERE (lv_query)
-          INTO TABLE @lt_code_obj.
-
-
-
-      ENDIF.
-*      lt_code = CORRESPONDING #( lt_code_obj DISCARDING DUPLICATES MAPPING transportrequestid = transportrequestid ).
-
-      lt_code =  CORRESPONDING #( lt_code_obj ).
-      SORT lt_code BY transportrequestid.
-      DELETE ADJACENT DUPLICATES FROM lt_code COMPARING transportrequestid.
-
-    ENDIF.
-
-    re_t_code = VALUE #( FOR <data> IN lt_code ( code = <data>-transportrequestid ) ).
-
-
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request_db~query_tr_by_description.
-
-    SELECT text~transportrequestid
-      FROM yc_transportrequesttext AS text
-     WHERE description IN @im_s_tr_query_by_description-description
-     INTO TABLE @DATA(lt_code).
-
-    SORT lt_code BY transportrequestid.
-    DELETE ADJACENT DUPLICATES FROM lt_code COMPARING transportrequestid.
-    re_t_code = lt_code.
-
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request_db~load_cache.
-    yif_trm_transport_request_db~check_exists_list( im_t_codes ).
-
-    "delivery document cache
-    DATA(lt_transport_request) = yif_trm_transport_request_db~fetch_data_list( im_t_codes ).
-
-    yif_trm_transport_request_db~fetch_entries_list( im_t_codes ).
-    yif_trm_transport_request_db~fetch_custo_entries_list( im_t_codes ).
-    yif_trm_transport_request_db~fetch_text_list( im_t_codes ).
-
-    IF im_s_load_cache_params-fetch_all_data EQ abap_true OR im_s_load_cache_params-tasks EQ abap_true.
-      DATA(lt_task) = yif_trm_transport_request_db~query_tr_data_by_attr( im_s_tr_query_by_attr = VALUE #( parentid = VALUE #( FOR code IN im_t_codes ( sign = 'I' option = 'EQ' low = code ) ) ) ).
-      IF lt_task IS NOT INITIAL.
-        yif_trm_transport_request_db~load_cache( EXPORTING im_t_codes = lt_task
-                                                           im_s_load_cache_params = im_s_load_cache_params ).
-      ENDIF.
-    ENDIF.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request_db~fetch_text_list.
-    IF ai_ignore_cache = abap_true.
-      re_t_text = fetch_text_from_db( im_t_transport_request ).
-    ELSE.
-      re_t_text = fetch_text_and_merge( im_t_transport_request ).
-    ENDIF.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request_db~fetch_text.
-    DATA(lt_text) = yif_trm_transport_request_db~fetch_text_list( VALUE #( ( code = im_o_transport_request->get_code( ) ) ) ).
-
-    TRY.
-        re_t_text = lt_text[ 1 ]-text.
-      CATCH cx_sy_itab_line_not_found.
-    ENDTRY.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request_db~fetch_entries_list.
-    IF ai_ignore_cache = abap_true.
-      re_t_entries = fetch_entries_from_db( im_t_transport_request ).
-    ELSE.
-      re_t_entries = fetch_entries_and_merge( im_t_transport_request ).
-    ENDIF.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request_db~fetch_entries.
-    DATA(lt_data) = yif_trm_transport_request_db~fetch_entries_list( VALUE #( ( code = im_o_transport_request->get_code( ) ) ) ).
-
-    TRY.
-        re_t_entries = lt_data[ 1 ]-entries.
-      CATCH cx_sy_itab_line_not_found.
-    ENDTRY.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request_db~fetch_data_list.
-    IF ai_ignore_cache = abap_true.
-      re_t_data = fetch_data_from_db( im_t_transport_request ).
-    ELSE.
-      re_t_data = fetch_data_and_merge( im_t_transport_request ).
-    ENDIF.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request_db~fetch_data.
-    DATA(lt_data) = yif_trm_transport_request_db~fetch_data_list( VALUE #( ( code = im_o_transport_request->get_code( ) ) ) ).
-
-    TRY.
-        re_s_data = lt_data[ 1 ]-data.
-      CATCH cx_sy_itab_line_not_found.
-    ENDTRY.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request_db~fetch_custo_entries_list.
-    IF ai_ignore_cache = abap_true.
-      re_t_custo_entries = fetch_custo_entries_from_db( im_t_transport_request ).
-    ELSE.
-      re_t_custo_entries = fetch_custo_entries_and_merge( im_t_transport_request ).
-    ENDIF.
-
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request_db~fetch_custo_entries.
-    DATA(lt_data) = yif_trm_transport_request_db~fetch_custo_entries_list( VALUE #( ( code = im_o_transport_request->get_code( ) ) ) ).
-
-    TRY.
-        re_t_custo_entries = lt_data[ 1 ]-entries.
-      CATCH cx_sy_itab_line_not_found.
-    ENDTRY.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request_db~fetch_customizing.
-
-    rs_customizing = ai_s_customizing.
-    IF rs_customizing IS NOT INITIAL.
-      RETURN.
-    ENDIF.
-
-    DATA lt_r_name TYPE RANGE OF tvarvc-name.
-    lt_r_name = VALUE #( ( sign = 'I' option = 'EQ' low = yif_trm_transport_request_db=>c_customizing-rfc_to_quality_name )
-                         ( sign = 'I' option = 'EQ' low = yif_trm_transport_request_db=>c_customizing-rfc_to_productive_name )
-                         ( sign = 'I' option = 'EQ' low = yif_trm_transport_request_db=>c_customizing-request_target_quality_name )
-                         ( sign = 'I' option = 'EQ' low = yif_trm_transport_request_db=>c_customizing-request_target_dev_name )
-                       ).
-
-    SELECT name, low FROM tvarvc
-        WHERE name IN @lt_r_name
-        INTO TABLE @DATA(lt_customizing).
-    IF NOT line_exists( lt_customizing[ 1 ] ).
-      RETURN.
-    ENDIF.
-
-    ai_s_customizing-rfc_to_quality = VALUE #( lt_customizing[ name = yif_trm_transport_request_db=>c_customizing-rfc_to_quality_name ]-low OPTIONAL ).
-    ai_s_customizing-rfc_to_productive = VALUE #( lt_customizing[ name = yif_trm_transport_request_db=>c_customizing-rfc_to_productive_name ]-low OPTIONAL ).
-    ai_s_customizing-request_target_system_quality = VALUE #( lt_customizing[ name = yif_trm_transport_request_db=>c_customizing-request_target_quality_name ]-low OPTIONAL ).
-    ai_s_customizing-request_target_system_dev = VALUE #( lt_customizing[ name = yif_trm_transport_request_db=>c_customizing-request_target_dev_name ]-low OPTIONAL ).
-
-    rs_customizing = ai_s_customizing.
-
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request_db~clear_cache.
-    REFRESH:
-             ai_t_exists_cache,
-             ai_t_data_cache,
-             ai_t_entries_cache,
-             ai_t_custo_entries_cache,
-             ai_t_text_cache.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request_db~check_exists_list.
-    IF ai_ignore_cache = abap_true.
-      re_t_exists = fetch_exists_from_db( im_t_transport_request ).
-    ELSE.
-      re_t_exists = fetch_exists_and_merge( im_t_transport_request ).
-    ENDIF.
-  ENDMETHOD.
-
-
-  METHOD yif_trm_transport_request_db~check_exists.
-    DATA(lt_exists) = yif_trm_transport_request_db~check_exists_list( VALUE #( ( code = im_o_transport_request->get_code( ) ) ) ).
-    re_exists = lt_exists[ 1 ]-exists.
-  ENDMETHOD.
+CLASS YCL_TRM_TRANSPORT_REQUEST_DB IMPLEMENTATION.
 
 
   METHOD fetch_text_from_db.
@@ -552,5 +306,251 @@ CLASS ycl_trm_transport_request_db IMPLEMENTATION.
 
     re_o_db = as_o_db_interface.
 
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~check_exists.
+    DATA(lt_exists) = yif_trm_transport_request_db~check_exists_list( VALUE #( ( code = im_o_transport_request->get_code( ) ) ) ).
+    re_exists = lt_exists[ 1 ]-exists.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~check_exists_list.
+    IF ai_ignore_cache = abap_true.
+      re_t_exists = fetch_exists_from_db( im_t_transport_request ).
+    ELSE.
+      re_t_exists = fetch_exists_and_merge( im_t_transport_request ).
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~clear_cache.
+    REFRESH:
+             ai_t_exists_cache,
+             ai_t_data_cache,
+             ai_t_entries_cache,
+             ai_t_custo_entries_cache,
+             ai_t_text_cache.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~fetch_customizing.
+
+    rs_customizing = ai_s_customizing.
+    IF rs_customizing IS NOT INITIAL.
+      RETURN.
+    ENDIF.
+
+    DATA lt_r_name TYPE RANGE OF tvarvc-name.
+    lt_r_name = VALUE #( ( sign = 'I' option = 'EQ' low = yif_trm_transport_request_db=>c_customizing-rfc_to_quality_name )
+                         ( sign = 'I' option = 'EQ' low = yif_trm_transport_request_db=>c_customizing-rfc_to_productive_name )
+                         ( sign = 'I' option = 'EQ' low = yif_trm_transport_request_db=>c_customizing-request_target_quality_name )
+                         ( sign = 'I' option = 'EQ' low = yif_trm_transport_request_db=>c_customizing-request_target_dev_name )
+                       ).
+
+    SELECT name, low FROM tvarvc
+        WHERE name IN @lt_r_name
+        INTO TABLE @DATA(lt_customizing).
+    IF NOT line_exists( lt_customizing[ 1 ] ).
+      RETURN.
+    ENDIF.
+
+    ai_s_customizing-rfc_to_quality = VALUE #( lt_customizing[ name = yif_trm_transport_request_db=>c_customizing-rfc_to_quality_name ]-low OPTIONAL ).
+    ai_s_customizing-rfc_to_productive = VALUE #( lt_customizing[ name = yif_trm_transport_request_db=>c_customizing-rfc_to_productive_name ]-low OPTIONAL ).
+    ai_s_customizing-request_target_system_quality = VALUE #( lt_customizing[ name = yif_trm_transport_request_db=>c_customizing-request_target_quality_name ]-low OPTIONAL ).
+    ai_s_customizing-request_target_system_dev = VALUE #( lt_customizing[ name = yif_trm_transport_request_db=>c_customizing-request_target_dev_name ]-low OPTIONAL ).
+
+    rs_customizing = ai_s_customizing.
+
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~fetch_custo_entries.
+    DATA(lt_data) = yif_trm_transport_request_db~fetch_custo_entries_list( VALUE #( ( code = im_o_transport_request->get_code( ) ) ) ).
+
+    TRY.
+        re_t_custo_entries = lt_data[ 1 ]-entries.
+      CATCH cx_sy_itab_line_not_found.
+    ENDTRY.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~fetch_custo_entries_list.
+    IF ai_ignore_cache = abap_true.
+      re_t_custo_entries = fetch_custo_entries_from_db( im_t_transport_request ).
+    ELSE.
+      re_t_custo_entries = fetch_custo_entries_and_merge( im_t_transport_request ).
+    ENDIF.
+
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~fetch_data.
+    DATA(lt_data) = yif_trm_transport_request_db~fetch_data_list( VALUE #( ( code = im_o_transport_request->get_code( ) ) ) ).
+
+    TRY.
+        re_s_data = lt_data[ 1 ]-data.
+      CATCH cx_sy_itab_line_not_found.
+    ENDTRY.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~fetch_data_list.
+    IF ai_ignore_cache = abap_true.
+      re_t_data = fetch_data_from_db( im_t_transport_request ).
+    ELSE.
+      re_t_data = fetch_data_and_merge( im_t_transport_request ).
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~fetch_entries.
+    DATA(lt_data) = yif_trm_transport_request_db~fetch_entries_list( VALUE #( ( code = im_o_transport_request->get_code( ) ) ) ).
+
+    TRY.
+        re_t_entries = lt_data[ 1 ]-entries.
+      CATCH cx_sy_itab_line_not_found.
+    ENDTRY.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~fetch_entries_list.
+    IF ai_ignore_cache = abap_true.
+      re_t_entries = fetch_entries_from_db( im_t_transport_request ).
+    ELSE.
+      re_t_entries = fetch_entries_and_merge( im_t_transport_request ).
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~fetch_text.
+    DATA(lt_text) = yif_trm_transport_request_db~fetch_text_list( VALUE #( ( code = im_o_transport_request->get_code( ) ) ) ).
+
+    TRY.
+        re_t_text = lt_text[ 1 ]-text.
+      CATCH cx_sy_itab_line_not_found.
+    ENDTRY.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~fetch_text_list.
+    IF ai_ignore_cache = abap_true.
+      re_t_text = fetch_text_from_db( im_t_transport_request ).
+    ELSE.
+      re_t_text = fetch_text_and_merge( im_t_transport_request ).
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~load_cache.
+    yif_trm_transport_request_db~check_exists_list( im_t_codes ).
+
+    "delivery document cache
+    DATA(lt_transport_request) = yif_trm_transport_request_db~fetch_data_list( im_t_codes ).
+
+    yif_trm_transport_request_db~fetch_entries_list( im_t_codes ).
+    yif_trm_transport_request_db~fetch_custo_entries_list( im_t_codes ).
+    yif_trm_transport_request_db~fetch_text_list( im_t_codes ).
+
+    IF im_s_load_cache_params-fetch_all_data EQ abap_true OR im_s_load_cache_params-tasks EQ abap_true.
+      DATA(lt_task) = yif_trm_transport_request_db~query_tr_data_by_attr( im_s_tr_query_by_attr = VALUE #( parentid = VALUE #( FOR code IN im_t_codes ( sign = 'I' option = 'EQ' low = code ) ) ) ).
+      IF lt_task IS NOT INITIAL.
+        yif_trm_transport_request_db~load_cache( EXPORTING im_t_codes = lt_task
+                                                           im_s_load_cache_params = im_s_load_cache_params ).
+      ENDIF.
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~query_tr_by_description.
+
+    SELECT text~transportrequestid
+      FROM yc_transportrequesttext AS text
+     WHERE description IN @im_s_tr_query_by_description-description
+     INTO TABLE @DATA(lt_code).
+
+    SORT lt_code BY transportrequestid.
+    DELETE ADJACENT DUPLICATES FROM lt_code COMPARING transportrequestid.
+    re_t_code = lt_code.
+
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~query_tr_data_by_attr.
+
+    IF im_s_tr_query_by_attr IS INITIAL.
+      RETURN.
+    ENDIF.
+
+    DATA(lv_query) = |tr~transportrequestid             IN @im_s_tr_query_by_attr-transportrequestid| &&
+                     | AND tr~transportrequesttype      IN @im_s_tr_query_by_attr-type|               &&
+                     | AND tr~transportrequestcategory  IN @im_s_tr_query_by_attr-category|           &&
+                     | AND tr~transportrequestowner     IN @im_s_tr_query_by_attr-owner|              &&
+                     | AND tr~transportrequeststatus    IN @im_s_tr_query_by_attr-status|             &&
+                     | AND tr~lastchangedate            IN @im_s_tr_query_by_attr-lastchangedate|     &&
+                     | AND tr~lastchangetime            IN @im_s_tr_query_by_attr-lastchangetime|     &&
+                     | AND tr~transportrequestparentid  IN @im_s_tr_query_by_attr-parentid| .
+
+
+    IF im_s_tr_query_by_attr-entries_attr IS INITIAL.
+
+      IF im_s_tr_query_by_attr-code IS NOT INITIAL.
+        SELECT tr~transportrequestid
+          FROM yc_transportrequest AS tr
+           FOR ALL ENTRIES IN @im_s_tr_query_by_attr-code
+         WHERE tr~transportrequestid EQ @im_s_tr_query_by_attr-code-code
+           AND (lv_query)
+          INTO TABLE @DATA(lt_code).
+      ELSE.
+        SELECT tr~transportrequestid
+          FROM yc_transportrequest AS tr
+         WHERE (lv_query)
+         INTO TABLE @lt_code.
+      ENDIF.
+
+    ELSE.
+      lv_query = lv_query &&
+                 | AND trobj~objectid   IN @im_s_tr_query_by_attr-entries_attr-objectid|     &&
+                 | AND trobj~ObjectType IN @im_s_tr_query_by_attr-entries_attr-ObjectType|   &&
+                 | AND trobj~ObjectName IN @im_s_tr_query_by_attr-entries_attr-ObjectName|   &&
+                 | AND trobj~LockStatus IN @im_s_tr_query_by_attr-entries_attr-LockStatus|.
+
+
+      IF im_s_tr_query_by_attr-code IS NOT INITIAL.
+        SELECT tr~transportrequestid
+          FROM yc_transportrequest AS tr
+         INNER JOIN yc_transportrequestobject AS trobj
+            ON tr~transportrequestid EQ trobj~transportrequestid
+           FOR ALL ENTRIES IN @im_s_tr_query_by_attr-code
+         WHERE tr~transportrequestid EQ @im_s_tr_query_by_attr-code-code
+           AND (lv_query)
+          INTO TABLE @DATA(lt_code_obj).
+      ELSE.
+        SELECT tr~transportrequestid
+          FROM yc_transportrequest AS tr
+         INNER JOIN yc_transportrequestobject AS trobj
+            ON tr~transportrequestid EQ trobj~transportrequestid
+         WHERE (lv_query)
+          INTO TABLE @lt_code_obj.
+
+
+
+      ENDIF.
+*      lt_code = CORRESPONDING #( lt_code_obj DISCARDING DUPLICATES MAPPING transportrequestid = transportrequestid ).
+
+      lt_code =  CORRESPONDING #( lt_code_obj ).
+      SORT lt_code BY transportrequestid.
+      DELETE ADJACENT DUPLICATES FROM lt_code COMPARING transportrequestid.
+
+    ENDIF.
+
+    re_t_code = VALUE #( FOR <data> IN lt_code ( code = <data>-transportrequestid ) ).
+
+
+  ENDMETHOD.
+
+
+  METHOD yif_trm_transport_request_db~set_ignore_cache.
+    ai_ignore_cache = im_ignore_cache.
   ENDMETHOD.
 ENDCLASS.

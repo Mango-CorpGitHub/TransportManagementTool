@@ -6,7 +6,7 @@ DATA go_app TYPE REF TO lcl_app.
 DATA lv_rfc_compare_destination TYPE rfcdest.
 
 MODULE status_0100 OUTPUT.
- SET PF-STATUS '0100-STATUS'.
+  SET PF-STATUS '0100-STATUS'.
 * SET TITLEBAR 'xxx'.
 ENDMODULE.
 
@@ -16,10 +16,6 @@ MODULE run_app OUTPUT.
     RETURN.
   ENDIF.
 
-  cl_gui_container=>default_screen->link(
-    repid = sy-repid
-    dynnr = '0100' ).
-
   go_app = NEW lcl_app( NEW lcl_alv_qry( ) ).
 
   go_app->run(
@@ -28,7 +24,11 @@ MODULE run_app OUTPUT.
       iv_tr_descr     = p_descr
       iv_compare      = p_comp
       iv_user_request = COND #( WHEN p_usr = abap_true THEN sy-uname ELSE space )
-      iv_rfc_compare_destination = lv_rfc_compare_destination ).
+      iv_rfc_compare_destination = lv_rfc_compare_destination
+      is_collisions_with = VALUE #( normal_collisions = abap_true " p_coll
+                                    tr_function = s_trfun[]
+                                    tr_status = s_trsta[]
+                                    tr_last_changed_on = s_as4da[] ) ).
 
 ENDMODULE.
 
@@ -79,6 +79,21 @@ CLASS lcl_selection_screen IMPLEMENTATION.
 
       WHEN 'F_SES'.
         execute_f_ses( ).
+
+*      WHEN 'P_COLL'.
+*
+*        IF p_coll = abap_true.
+*          CLEAR s_trfun[].
+*          CLEAR s_trsta[].
+*          CLEAR s_as4da[].
+*        ENDIF.
+*
+*        " Default values
+*        IF p_coll = abap_false.
+*          s_trfun[] = VALUE #( ( sign = 'I' option = 'NE' low = yif_trm_transport_request=>type-toc ) ).
+*          s_trsta[] = VALUE #( ( sign = 'I' option = 'EQ' low = yif_trm_transport_request=>status-release )
+*                               ( sign = 'I' option = 'EQ' low = yif_trm_transport_request=>status-release_with_import_protection ) ).
+*        ENDIF.
 
       WHEN OTHERS.
 
@@ -148,7 +163,7 @@ CLASS lcl_selection_screen IMPLEMENTATION.
             lv_rfc_compare_destination = ls_customizing-rfc_to_productive.
         ENDCASE.
 
-      CATCH ycx_trm_transport_request into data(lx_customizing).
+      CATCH ycx_trm_transport_request INTO DATA(lx_customizing).
         MESSAGE lx_customizing->get_text(  ) TYPE 'S' DISPLAY LIKE 'E'.
         RETURN.
     ENDTRY.
@@ -209,6 +224,12 @@ CLASS lcl_selection_screen IMPLEMENTATION.
     IF rs_screen-name = 'F_SES'.
       rs_screen-active = 0.
     ENDIF.
+
+*    IF ( rs_screen-name CS 'S_TRFUN' AND NOT rs_screen-name CS 'OPTI_PUSH' ) OR
+*       ( rs_screen-name CS 'S_TRSTA' AND NOT rs_screen-name CS 'OPTI_PUSH' ) OR
+*       ( rs_screen-name CS 'S_AS4DA' AND NOT rs_screen-name CS 'OPTI_PUSH' ).
+*      rs_screen-input = COND #( WHEN p_coll = abap_true THEN 0 ELSE 1 ).
+*    ENDIF.
 
   ENDMETHOD.
 

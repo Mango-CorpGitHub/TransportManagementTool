@@ -37,7 +37,7 @@ ENDCLASS.
 
 
 
-CLASS ycl_trm_tr_custo_entry IMPLEMENTATION.
+CLASS YCL_TRM_TR_CUSTO_ENTRY IMPLEMENTATION.
 
 
   METHOD constructor.
@@ -55,6 +55,7 @@ CLASS ycl_trm_tr_custo_entry IMPLEMENTATION.
 
   ENDMETHOD.
 
+
   METHOD get_entry_data.
 
     DATA(lt_item_data) = ai_o_db_interface->fetch_custo_entries( ai_o_transport_request ).
@@ -68,6 +69,7 @@ CLASS ycl_trm_tr_custo_entry IMPLEMENTATION.
     ENDTRY.
 
   ENDMETHOD.
+
 
   METHOD yif_trm_tr_custo_entry~get_activity.
     re_activity = ai_s_entry_data-activity.
