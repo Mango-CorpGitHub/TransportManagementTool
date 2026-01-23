@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_FUGR" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <AREAT>Cross REF FG</AREAT>
+   <INCLUDES>
+    <SOBJ_NAME>LYTRM_FG_CROSS_REFTOP</SOBJ_NAME>
+    <SOBJ_NAME>SAPLYTRM_FG_CROSS_REF</SOBJ_NAME>
+   </INCLUDES>
+   <FUNCTIONS>
+    <item>
+     <FUNCNAME>YTRM_FM_CROSS_REF_DESCR_DDLS</FUNCNAME>
+     <REMOTE_CALL>R</REMOTE_CALL>
+     <SHORT_TEXT>Describe DDLS</SHORT_TEXT>
+     <IMPORT>
+      <RSIMP>
+       <PARAMETER>DDLNAME</PARAMETER>
+       <TYP>DDLNAME</TYP>
+      </RSIMP>
+     </IMPORT>
+     <TABLES>
+      <RSTBL>
+       <PARAMETER>FIELDS</PARAMETER>
+       <TYP>YTRM_T_DDL_BASE_FIELDS</TYP>
+      </RSTBL>
+     </TABLES>
+     <DOCUMENTATION>
+      <RSFDO>
+       <PARAMETER>DDLNAME</PARAMETER>
+       <KIND>P</KIND>
+       <STEXT>Name of a DDL Source</STEXT>
+      </RSFDO>
+      <RSFDO>
+       <PARAMETER>FIELDS</PARAMETER>
+       <KIND>P</KIND>
+       <STEXT>DDL base fields</STEXT>
+      </RSFDO>
+     </DOCUMENTATION>
+    </item>
+    <item>
+     <FUNCNAME>YTRM_FM_CROSS_REF_EXISTS</FUNCNAME>
+     <REMOTE_CALL>R</REMOTE_CALL>
+     <SHORT_TEXT>Object Exist</SHORT_TEXT>
+     <IMPORT>
+      <RSIMP>
+       <PARAMETER>IV_PGMID</PARAMETER>
+       <DBFIELD>E071-PGMID</DBFIELD>
+      </RSIMP>
+      <RSIMP>
+       <PARAMETER>IV_OBJECT</PARAMETER>
+       <DBFIELD>E071-OBJECT</DBFIELD>
+      </RSIMP>
+      <RSIMP>
+       <PARAMETER>IV_OBJ_NAME</PARAMETER>
+       <DBFIELD>E071-OBJ_NAME</DBFIELD>
+      </RSIMP>
+     </IMPORT>
+     <EXPORT>
+      <RSEXP>
+       <PARAMETER>E_EXIST</PARAMETER>
+       <DBFIELD>STRL_PARI-FLAG</DBFIELD>
+      </RSEXP>
+     </EXPORT>
+     <DOCUMENTATION>
+      <RSFDO>
+       <PARAMETER>IV_PGMID</PARAMETER>
+       <KIND>P</KIND>
+       <STEXT>Program ID in Requests and Tasks</STEXT>
+      </RSFDO>
+      <RSFDO>
+       <PARAMETER>IV_OBJECT</PARAMETER>
+       <KIND>P</KIND>
+       <STEXT>Object Type in Object Directory</STEXT>
+      </RSFDO>
+      <RSFDO>
+       <PARAMETER>IV_OBJ_NAME</PARAMETER>
+       <KIND>P</KIND>
+       <STEXT>Object Name in Object List</STEXT>
+      </RSFDO>
+      <RSFDO>
+       <PARAMETER>E_EXIST</PARAMETER>
+       <KIND>P</KIND>
+       <STEXT>Single-Character Flag</STEXT>
+      </RSFDO>
+     </DOCUMENTATION>
+    </item>
+   </FUNCTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>
