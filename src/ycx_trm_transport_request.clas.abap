@@ -51,6 +51,28 @@ CLASS ycx_trm_transport_request DEFINITION
         attr4 TYPE scx_attrname VALUE '',
       END OF entry_not_deleted .
 
+    CONSTANTS:
+      BEGIN OF communication_error,
+        msgid TYPE symsgid VALUE 'TSYS',
+        msgno TYPE symsgno VALUE '008',
+        attr1 TYPE scx_attrname VALUE 'DESTINATION',
+        attr2 TYPE scx_attrname VALUE '',
+        attr3 TYPE scx_attrname VALUE '',
+        attr4 TYPE scx_attrname VALUE '',
+      END OF communication_error .
+
+    CONSTANTS:
+      BEGIN OF not_released_in_time,
+        msgid TYPE symsgid VALUE yif_trm_transport_request=>message_class,
+        msgno TYPE symsgno VALUE '020',
+        attr1 TYPE scx_attrname VALUE 'CODE',
+        attr2 TYPE scx_attrname VALUE '',
+        attr3 TYPE scx_attrname VALUE '',
+        attr4 TYPE scx_attrname VALUE '',
+      END OF not_released_in_time .
+
+    DATA destination TYPE rfcdest .
+
     METHODS constructor
       IMPORTING
         !textid           LIKE if_t100_message=>t100key OPTIONAL
@@ -58,7 +80,8 @@ CLASS ycx_trm_transport_request DEFINITION
         !code             TYPE trkorr OPTIONAL
         !customizing_name TYPE tvarvc-name OPTIONAL
         !logger           TYPE REF TO yif_trm_logger OPTIONAL
-        !msgty            TYPE symsgty OPTIONAL .
+        !msgty            TYPE symsgty OPTIONAL
+        !destination      TYPE rfcdest OPTIONAL .
 
     DATA: logger TYPE REF TO yif_trm_logger.
 
@@ -79,6 +102,7 @@ CLASS YCX_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
     me->customizing_name = customizing_name .
     me->logger = logger .
     me->msgty = msgty .
+    me->destination = destination .
     CLEAR me->textid.
     IF textid IS INITIAL.
       if_t100_message~t100key = if_t100_message=>default_textid.

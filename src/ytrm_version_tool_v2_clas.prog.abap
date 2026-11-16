@@ -185,126 +185,65 @@ ENDCLASS.
 CLASS lcl_alv_qry IMPLEMENTATION.
 
   METHOD execute.
-    DATA(lt_tr_objects) = VALUE yif_trm_tr_object=>tab( ).
+    DATA ls_overview TYPE ycl_trm_tr_overview=>ty_s_overview.
 
-    lt_tr_objects = VALUE #( BASE lt_tr_objects
-                             FOR lo_transport_request IN it_transport_request
-                             FOR entry IN lo_transport_request->get_entries( im_include_task_objects = abap_true )
-                             ( entry ) ).
+    FINAL(lo_collisions) = ycl_trm_get_objects_w_colision=>create( is_collision_with-normal_collisions ).
+    FINAL(ls_collision_with) = VALUE yif_trm_get_obj_w_collisions=>ty_s_collisions_with(
+                                         tr_function        = is_collision_with-tr_function
+                                         tr_last_changed_on = is_collision_with-tr_last_changed_on
+                                         tr_status          = is_collision_with-tr_status ).
 
     IF cv_compare = abap_true.
-
       TRY.
-          FINAL(lt_comparasion) = ycl_trm_compare_objects=>create( iv_rfc_compare_destination )->compare( lt_tr_objects ).
-
-          DATA(lt_fragments_and_objects) = VALUE yif_trm_get_obj_w_collisions=>tyt_objects(
-                                                     FOR ls_comparison IN lt_comparasion
-                                                     ( pgmid    = ls_comparison-pgmid
-                                                       object   = ls_comparison-object
-                                                       obj_name = ls_comparison-obj_name  ) ).
-
-          lt_fragments_and_objects = VALUE yif_trm_get_obj_w_collisions=>tyt_objects(
-                                               BASE lt_fragments_and_objects
-                                               FOR ls_comparison IN lt_comparasion
-                                               ( pgmid    = ls_comparison-fragid
-                                                 object   = ls_comparison-fragment
-                                                 obj_name = ls_comparison-fragname ) ).
-
-          result = CORRESPONDING #( lt_comparasion MAPPING its_equal    = equal
-                                                           its_new      = not_comparable
-                                                           not_compared = not_compared ).
-        CATCH ycx_trm_transport_request.
+          ls_overview = NEW ycl_trm_tr_overview(
+                                io_comparer       = ycl_trm_compare_objects=>create( iv_rfc_compare_destination )
+                                io_collisions     = lo_collisions
+                                is_collision_with = ls_collision_with )->get(
+                                    it_transport_request = it_transport_request
+                                    ir_excluded_requests = ir_transport_request ).
+        CATCH ycx_trm_transport_request INTO FINAL(lx_compare).
+          MESSAGE lx_compare TYPE 'I'.
           cv_compare = abap_false.
-
-          lt_fragments_and_objects = VALUE yif_trm_get_obj_w_collisions=>tyt_objects(
-                                               FOR lo_tr_objects IN lt_tr_objects
-                                               ( pgmid    = lo_tr_objects->get_object_id( )
-                                                 object   = lo_tr_objects->get_object_type( )
-                                                 obj_name = lo_tr_objects->get_object_name( ) ) ).
-
-          result = VALUE #( FOR object IN lt_tr_objects
-                            ( pgmid    = object->get_object_id( )
-                              object   = object->get_object_type( )
-                              obj_name = object->get_object_name( )
-                              objfunc  = object->get_function( )
-                              activity = object->get_activity( )
-                              lang     = object->get_language( ) ) ).
       ENDTRY.
-    ELSE.
-
-      lt_fragments_and_objects = VALUE yif_trm_get_obj_w_collisions=>tyt_objects(
-                                           FOR lo_tr_objects IN lt_tr_objects
-                                           ( pgmid    = lo_tr_objects->get_object_id( )
-                                             object   = lo_tr_objects->get_object_type( )
-                                             obj_name = lo_tr_objects->get_object_name( ) ) ).
-
-      result = VALUE #( FOR object IN lt_tr_objects
-                        ( pgmid    = object->get_object_id( )
-                          object   = object->get_object_type( )
-                          obj_name = object->get_object_name( )
-                          objfunc  = object->get_function( )
-                          activity = object->get_activity( )
-                          lang     = object->get_language( ) ) ).
-
     ENDIF.
 
-    SORT result BY pgmid
-                   object
-                   obj_name.
-    DELETE ADJACENT DUPLICATES FROM result.
+    IF cv_compare = abap_false.
+      ls_overview = NEW ycl_trm_tr_overview( io_collisions     = lo_collisions
+                                             is_collision_with = ls_collision_with )->get(
+                                                 it_transport_request = it_transport_request
+                                                 ir_excluded_requests = ir_transport_request ).
+    ENDIF.
 
-    SORT lt_fragments_and_objects BY pgmid
-                                     object
-                                     obj_name.
-    DELETE ADJACENT DUPLICATES FROM lt_fragments_and_objects.
-
-    FINAL(lt_objects_with_colision) = ycl_trm_get_objects_w_colision=>create( is_collision_with-normal_collisions )->find(
-        it_objects_being_transported = CORRESPONDING #( lt_fragments_and_objects )
-        ir_tr_being_transported      = CORRESPONDING #( ir_transport_request )
-        is_collision_with            = VALUE #( tr_function        = is_collision_with-tr_function
-                                                tr_last_changed_on = is_collision_with-tr_last_changed_on
-                                                tr_status          = is_collision_with-tr_status ) ).
-
-    LOOP AT lt_objects_with_colision ASSIGNING FIELD-SYMBOL(<ls_objects_with_colision>).
-
-      ASSIGN result[ fragid   = <ls_objects_with_colision>-pgmid
-                     fragment = <ls_objects_with_colision>-object
-                     fragname = <ls_objects_with_colision>-obj_name ] TO FIELD-SYMBOL(<ls_alv_output>).
-      IF sy-subrc = 0.
-        INSERT CONV #( <ls_objects_with_colision>-request ) INTO TABLE <ls_alv_output>-collisions.
-        <ls_alv_output>-has_collisions = icon_led_red.
-        CONTINUE.
-      ENDIF.
-
-      " Find collisions to all object, not only fragment
-      LOOP AT result ASSIGNING <ls_alv_output> WHERE     pgmid    = <ls_objects_with_colision>-pgmid
-                                                     AND object   = <ls_objects_with_colision>-object
-                                                     AND obj_name = <ls_objects_with_colision>-obj_name.
-
-        INSERT CONV #( <ls_objects_with_colision>-request ) INTO TABLE <ls_alv_output>-collisions.
-        <ls_alv_output>-has_collisions = icon_led_red.
-      ENDLOOP.
-
+    LOOP AT ls_overview-messages ASSIGNING FIELD-SYMBOL(<ls_message>).
+      MESSAGE ID <ls_message>-id TYPE 'I' NUMBER <ls_message>-number
+              WITH <ls_message>-message_v1 <ls_message>-message_v2
+                   <ls_message>-message_v3 <ls_message>-message_v4.
     ENDLOOP.
 
-    LOOP AT result ASSIGNING <ls_alv_output>.
+    result = VALUE #( FOR ls_entry IN ls_overview-entries
+                      ( fragid         = ls_entry-fragid
+                        fragment       = ls_entry-fragment
+                        fragname       = ls_entry-fragname
+                        pgmid          = ls_entry-pgmid
+                        object         = ls_entry-object
+                        obj_name       = ls_entry-obj_name
+                        objfunc        = ls_entry-objfunc
+                        activity       = ls_entry-activity
+                        lang           = ls_entry-lang
+                        keys           = ls_entry-keys
+                        collisions     = ls_entry-collisions
+                        has_collisions = COND #( WHEN ls_entry-collisions IS INITIAL
+                                                 THEN icon_led_green
+                                                 ELSE icon_led_red )
+                        its_new        = SWITCH #( ls_entry-comparison
+                                                   WHEN ycl_trm_tr_overview=>c_comparison-new          THEN icon_checked
+                                                   WHEN ycl_trm_tr_overview=>c_comparison-not_compared THEN icon_question )
+                        its_equal      = SWITCH #( ls_entry-comparison
+                                                   WHEN ycl_trm_tr_overview=>c_comparison-equal        THEN icon_checked
+                                                   WHEN ycl_trm_tr_overview=>c_comparison-not_compared THEN icon_question )
+                        not_compared   = xsdbool( ls_entry-comparison = ycl_trm_tr_overview=>c_comparison-not_compared ) ) ).
 
-      IF <ls_alv_output>-has_collisions IS INITIAL.
-        <ls_alv_output>-has_collisions = icon_led_green.
-      ENDIF.
-
-      IF <ls_alv_output>-its_equal = abap_true.
-        <ls_alv_output>-its_equal = icon_checked.
-      ENDIF.
-
-      IF <ls_alv_output>-its_new = abap_true.
-        <ls_alv_output>-its_new = icon_checked.
-      ENDIF.
-
-      IF <ls_alv_output>-not_compared = abap_true.
-        <ls_alv_output>-its_new   = icon_question.
-        <ls_alv_output>-its_equal = icon_question.
-      ENDIF.
+    LOOP AT result ASSIGNING FIELD-SYMBOL(<ls_alv_output>).
 
       IF <ls_alv_output>-objfunc = yif_trm_tr_object=>function-customizing.
         <ls_alv_output>-its_customizing = icon_foreign_key.
@@ -390,9 +329,9 @@ CLASS lcl_selected_transport_request IMPLEMENTATION.
                             CHANGING  t_table      = gt_request_data ).
 
     alv_popup->set_screen_popup( start_column = 1
-                                 end_column   = 75
+                                 end_column   = 100
                                  start_line   = 1
-                                 end_line     = 10 ).
+                                 end_line     = 35 ).
 
     CAST cl_salv_column_table( alv_popup->get_columns( )->get_column( 'TYPE' ) )->set_short_text( CONV #( 'Type' ) ).
     CAST cl_salv_column_table( alv_popup->get_columns( )->get_column( 'TYPE' ) )->set_medium_text( CONV #( 'Type' ) ).
@@ -1152,7 +1091,9 @@ CLASS lcl_app IMPLEMENTATION.
 
     lt_users = VALUE #( ( '00752978' )
                         ( '00739817' )
-                        ( '03750198' ) ).
+                        ( '03750198' )
+                        ( '00755532' )
+                     ).
 
     IF line_exists( lt_users[ table_line = sy-uname ] ).
       TRY.
@@ -1367,7 +1308,7 @@ CLASS lcl_app IMPLEMENTATION.
          AND lv_release        = abap_true.
         CALL FUNCTION 'ABAP4_CALL_TRANSACTION' STARTING NEW TASK 'TEST'
           DESTINATION rfc_compare_destination
-          EXPORTING tcode = 'STMS'.
+          EXPORTING tcode = 'STMS_IMPORT'.
       ENDIF.
 
     ENDIF.
@@ -1710,9 +1651,16 @@ CLASS lcl_app IMPLEMENTATION.
                              FOR entry IN tr_request->get_entries( im_include_task_objects = abap_true )
                              ( entry ) ).
     TRY.
-        FINAL(lt_compare) = ycl_trm_compare_objects=>create(
-                                ycl_trm_transport_request=>get_customizing( )-rfc_to_productive )->compare(
-                                                                                                    lt_tr_objects ).
+        ycl_trm_compare_objects=>create( ycl_trm_transport_request=>get_customizing( )-rfc_to_productive )->compare(
+          EXPORTING it_objects    = lt_tr_objects
+          IMPORTING et_messages   = FINAL(lt_compare_messages)
+          RECEIVING rt_comparison = FINAL(lt_compare) ).
+
+        LOOP AT lt_compare_messages ASSIGNING FIELD-SYMBOL(<ls_compare_message>).
+          MESSAGE ID <ls_compare_message>-id TYPE 'I' NUMBER <ls_compare_message>-number
+                  WITH <ls_compare_message>-message_v1 <ls_compare_message>-message_v2
+                       <ls_compare_message>-message_v3 <ls_compare_message>-message_v4.
+        ENDLOOP.
 
         DATA(lt_compare_equals) = lt_compare.
 
@@ -1818,8 +1766,8 @@ CLASS lcl_app IMPLEMENTATION.
 
         _refresh_app( ).
 
-      CATCH ycx_trm_transport_request.
-        " handle exception
+      CATCH ycx_trm_transport_request INTO FINAL(lx_compare).
+        MESSAGE lx_compare TYPE 'I'.
     ENDTRY.
   ENDMETHOD.
 

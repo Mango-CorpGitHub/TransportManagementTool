@@ -12,10 +12,12 @@ INTERFACE yif_trm_cross_reference
                equal_in_destination          TYPE ty_e_status VALUE 'Equal in destination',
                different_in_destination      TYPE ty_e_status VALUE 'Different in destination',
                method_definition_dif_in_dest TYPE ty_e_status VALUE 'Method definition different in destination',
+               method_def_dif_in_dest_w_err  TYPE ty_e_status VALUE 'Method definition different in destination - error',
                only_in_destination           TYPE ty_e_status VALUE 'Only in destination',
                different_but_not_relevant    TYPE ty_e_status VALUE 'Different but not relevant',
                different                     TYPE ty_e_status VALUE 'Different',
                definition_missing            TYPE ty_e_status VALUE 'Definition Missing',
+               definition_also_in_trans_req  TYPE ty_e_status VALUE 'Definition Also in Transport Request',
 
                " Intern status
                subobject_not_assigned        TYPE ty_e_status VALUE 'INTERNAL - SubObject not assigned',
@@ -58,16 +60,16 @@ INTERFACE yif_trm_cross_reference
 
   METHODS get_data RETURNING VALUE(rs_data) TYPE ty_s_result.
 
+  "! The referenced object exists in the destination system
   METHODS exists
-    IMPORTING iv_rfc_destination TYPE rfcdes-rfcdest OPTIONAL
-    RETURNING VALUE(rv_exists)   TYPE abap_bool
+    RETURNING VALUE(rv_exists) TYPE abap_bool
     RAISING   cx_method_not_implemented.
 
   METHODS navigate
     RAISING ycx_trm_transport_request.
 
+  "! Compares the referenced object in the local and the destination system
   METHODS compare
-    IMPORTING iv_rfc_destination   TYPE rfcdes-rfcdest
     RETURNING VALUE(rt_comparison) TYPE ty_t_comparison
     RAISING   cx_method_not_implemented.
 

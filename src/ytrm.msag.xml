@@ -121,6 +121,18 @@
      <MSGNR>019</MSGNR>
      <TEXT>Not objects found to analyze dependencies</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>020</MSGNR>
+     <TEXT>Request &amp;1 was not released within the maximum waiting time</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>YTRM</ARBGB>
+     <MSGNR>021</MSGNR>
+     <TEXT>&amp;1 entries could not be added to request &amp;2</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

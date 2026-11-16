@@ -29,6 +29,11 @@ CLASS ycl_trm_logger DEFINITION
     DATA ai_handle   TYPE balloghndl.
     DATA ai_s_header TYPE bal_s_log.
 
+    METHODS get_message_handles RETURNING VALUE(re_t_msg_handles) TYPE bal_t_msgh.
+
+    METHODS get_message_from_handle IMPORTING im_msg_handle   TYPE balmsghndl
+                                    RETURNING VALUE(re_s_msg) TYPE bal_s_msg.
+
 ENDCLASS.
 
 
@@ -210,4 +215,51 @@ CLASS ycl_trm_logger IMPLEMENTATION.
     add_text( im_text = im_text
               im_type = 'E' ).
   ENDMETHOD.
+
+  METHOD get_message_handles.
+
+     CALL FUNCTION 'BAL_GLB_SEARCH_MSG'
+      EXPORTING
+        i_t_log_handle = VALUE bal_t_logh( ( ai_handle ) )
+      IMPORTING
+        e_t_msg_handle = re_t_msg_handles
+      EXCEPTIONS
+        msg_not_found  = 1
+        OTHERS         = 2.
+
+  ENDMETHOD.
+
+  METHOD get_message_from_handle.
+
+    CALL FUNCTION 'BAL_LOG_MSG_READ'
+      EXPORTING
+        i_s_msg_handle = im_msg_handle
+      IMPORTING
+        e_s_msg        = re_s_msg.
+
+  ENDMETHOD.
+
+  METHOD yif_trm_logger~display_fullscreen.
+
+    DATA: ls_display_profile TYPE bal_s_prof.
+
+    CALL FUNCTION 'BAL_DSP_PROFILE_STANDARD_GET'
+      IMPORTING
+        e_s_display_profile = ls_display_profile.
+
+    CALL FUNCTION 'BAL_DSP_LOG_DISPLAY'
+      EXPORTING
+        i_s_display_profile    = ls_display_profile
+        i_t_log_handle         = VALUE bal_t_logh( ( ai_handle ) ).
+
+  ENDMETHOD.
+
+  METHOD yif_trm_logger~get_messages_table.
+
+    DATA(lt_msg_handles) = get_message_handles( ).
+
+    re_t_message = VALUE #( FOR handle IN lt_msg_handles ( get_message_from_handle( handle ) ) ).
+
+  ENDMETHOD.
+
 ENDCLASS.

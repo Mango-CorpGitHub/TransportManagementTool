@@ -2,7 +2,7 @@ CLASS ycl_trm_cross_reference_meth DEFINITION
   PUBLIC
   INHERITING FROM ycl_trm_cross_ref FINAL
   CREATE PRIVATE
-  GLOBAL FRIENDS ycl_trm_cross_ref.
+  GLOBAL FRIENDS ycl_trm_xref_reference_factory.
 
   PUBLIC SECTION.
     METHODS yif_trm_cross_reference~compare  REDEFINITION.
@@ -14,9 +14,9 @@ CLASS ycl_trm_cross_reference_meth DEFINITION
     ALIASES navigate FOR yif_trm_cross_reference~navigate.
 
     METHODS describe
-      IMPORTING iv_rfc_destination           TYPE rfcdes-rfcdest OPTIONAL
-      RETURNING VALUE(rs_method_description) TYPE ycl_trm_cross_ref_describe_obj=>ty_s_method_desription
-      RAISING   ycx_trm_transport_request.
+      IMPORTING iv_in_destination            TYPE abap_bool DEFAULT abap_false
+      RETURNING VALUE(rs_method_description) TYPE yif_trm_xref_system=>ty_s_method_description
+      RAISING   ycx_trm_cross_reference.
 
   PROTECTED SECTION.
 
@@ -31,20 +31,27 @@ CLASS ycl_trm_cross_reference_meth DEFINITION
       RETURNING VALUE(rs_method) TYPE ty_s_method.
 
     METHODS constructor
-      IMPORTING is_data TYPE yif_trm_cross_reference=>ty_s_result
-      RAISING
-        ycx_trm_transport_request.
+      IMPORTING is_data               TYPE yif_trm_cross_reference=>ty_s_result
+                io_source_system      TYPE REF TO yif_trm_xref_system
+                io_destination_system TYPE REF TO yif_trm_xref_system.
 
 ENDCLASS.
 
 
 CLASS ycl_trm_cross_reference_meth IMPLEMENTATION.
+
   METHOD constructor.
-    super->constructor( is_data ).
+    super->constructor( is_data               = is_data
+                        io_source_system      = io_source_system
+                        io_destination_system = io_destination_system ).
 
     " Cambiar el nombre del método si es un alias
-    FINAL(lt_class_description) = ycl_trm_cross_ref_describe_obj=>new( )->describe(
-                                      CONV #( cross_reference_data-reference_fragname(30) ) ).
+    TRY.
+        FINAL(lt_class_description) = source_system->describe(
+                                          CONV #( cross_reference_data-reference_fragname(30) ) ).
+      CATCH ycx_trm_cross_reference.
+        RETURN.
+    ENDTRY.
 
     FINAL(lv_method_name) = cross_reference_data-reference_fragname+30.
     FINAL(lv_method_name_if_alias) = VALUE #( lt_class_description[
@@ -63,12 +70,12 @@ CLASS ycl_trm_cross_reference_meth IMPLEMENTATION.
   METHOD yif_trm_cross_reference~compare.
     TRY.
         FINAL(lt_current_system_param) = describe( )-parameters.
-      CATCH ycx_trm_transport_request.
+      CATCH ycx_trm_cross_reference.
     ENDTRY.
 
     TRY.
-        FINAL(lt_destination_system_param) = describe( iv_rfc_destination )-parameters.
-      CATCH ycx_trm_transport_request.
+        FINAL(lt_destination_system_param) = describe( iv_in_destination = abap_true )-parameters.
+      CATCH ycx_trm_cross_reference.
     ENDTRY.
 
     rt_comparison = VALUE #( FOR ls_current_system_param IN lt_current_system_param
@@ -95,14 +102,18 @@ CLASS ycl_trm_cross_reference_meth IMPLEMENTATION.
       ENDIF.
 
       " No existe en origen
+      " Si en destino hay un parámetro obligatorio que no está en origen, va a dar error
       INSERT VALUE yif_trm_cross_reference=>ty_s_comparison(
-                       severity = icon_led_green
-                       status   = yif_trm_cross_reference=>c_status-only_in_destination
-                       name     = <ls_destination_system_param>-sconame
-                       type     = <ls_destination_system_param>-type )
+          severity = COND #( WHEN <ls_destination_system_param>-paroptionl = abap_true OR <ls_destination_system_param>-parpreferd = abap_true OR <ls_destination_system_param>-parvalue IS NOT INITIAL
+                             THEN icon_led_green
+                             ELSE icon_led_red )
+          status   = yif_trm_cross_reference=>c_status-only_in_destination
+          name     = <ls_destination_system_param>-sconame
+          type     = <ls_destination_system_param>-type )
              INTO TABLE rt_comparison.
 
     ENDLOOP.
+
   ENDMETHOD.
 
   METHOD split.
@@ -133,16 +144,15 @@ CLASS ycl_trm_cross_reference_meth IMPLEMENTATION.
   METHOD describe.
     FINAL(ls_method_splitted) = split( cross_reference_data-reference_fragname ).
 
-    RETURN ycl_trm_cross_ref_describe_obj=>new( iv_rfc_destination )->method(
-                                                                       iv_object_name = ls_method_splitted-clas_or_intf
-                                                                       iv_method_name = ls_method_splitted-method ).
+    RETURN system( iv_in_destination )->describe_method( iv_object_name = ls_method_splitted-clas_or_intf
+                                                         iv_method_name = ls_method_splitted-method ).
   ENDMETHOD.
 
   METHOD yif_trm_cross_reference~exists.
     TRY.
-        describe( iv_rfc_destination ).
+        describe( iv_in_destination = abap_true ).
         RETURN abap_true.
-      CATCH ycx_trm_transport_request.
+      CATCH ycx_trm_cross_reference.
         RETURN abap_false.
     ENDTRY.
   ENDMETHOD.
@@ -159,4 +169,5 @@ CLASS ycl_trm_cross_reference_meth IMPLEMENTATION.
 
     ENDTRY.
   ENDMETHOD.
+
 ENDCLASS.

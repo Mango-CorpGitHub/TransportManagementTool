@@ -62,6 +62,9 @@ CLASS YCL_TRM_GET_OBJ_W_NORMAL_COLL IMPLEMENTATION.
 * Delete the entries that doesn't have to be considered
     DELETE lt_colisions WHERE pgmid = 'R3TR' AND ( object = 'TABU' OR object = 'VDAT' OR object = 'TDAT' ).
 
+* Delete ZFI_ADI entry...
+    DELETE lt_colisions WHERE pgmid = 'R3TR' AND object = 'CDAT' AND obj_name = 'ZAMF_VC_BUS_OBJ'.
+
 * Delete duplicates
     rt_colisions = VALUE #( FOR ls_colision IN lt_colisions
     ( request   = COND #( WHEN ls_colision-strkorr IS NOT INITIAL THEN ls_colision-strkorr ELSE ls_colision-trkorr )

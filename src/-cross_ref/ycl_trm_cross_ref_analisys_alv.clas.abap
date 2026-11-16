@@ -144,7 +144,10 @@ CLASS ycl_trm_cross_ref_analisys_alv DEFINITION
 ENDCLASS.
 
 
-CLASS ycl_trm_cross_ref_analisys_alv IMPLEMENTATION.
+
+CLASS YCL_TRM_CROSS_REF_ANALISYS_ALV IMPLEMENTATION.
+
+
   METHOD constructor.
     main_container = io_container.
     ai_rfc_destination = iv_rfc_comparison.
@@ -192,6 +195,7 @@ CLASS ycl_trm_cross_ref_analisys_alv IMPLEMENTATION.
     split_container_up->set_column_width( id    = 2
                                           width = 0  ).
   ENDMETHOD.
+
 
   METHOD display.
     ai_t_analyzed_objects = map_analyzed_objects( is_result-analized_objets_resume ).
@@ -261,39 +265,17 @@ CLASS ycl_trm_cross_ref_analisys_alv IMPLEMENTATION.
     WRITE space.
   ENDMETHOD.
 
+
   METHOD mapp_to_response.
+    FINAL(lo_severity) = NEW ycl_trm_xref_severity( ).
+
     LOOP AT it_result ASSIGNING FIELD-SYMBOL(<lo_reference_list>).
 
       APPEND INITIAL LINE TO rt_display ASSIGNING FIELD-SYMBOL(<ls_display>).
       <ls_display> = CORRESPONDING #( <lo_reference_list>->get_data( ) ).
       <ls_display>-reference            = <lo_reference_list>.
 
-      <ls_display>-severity             = SWITCH #( <ls_display>-status
-                                                    WHEN yif_trm_cross_reference=>c_status-also_in_transport_request THEN
-                                                      icon_checked
-                                                    WHEN yif_trm_cross_reference=>c_status-different_in_destination THEN
-                                                      icon_led_yellow
-                                                    WHEN yif_trm_cross_reference=>c_status-method_definition_dif_in_dest THEN
-                                                      icon_led_yellow
-                                                    WHEN yif_trm_cross_reference=>c_status-equal_in_destination THEN
-                                                      icon_led_green
-                                                    WHEN yif_trm_cross_reference=>c_status-exist_in_destination THEN
-                                                      icon_led_green
-                                                    WHEN yif_trm_cross_reference=>c_status-different_but_not_relevant THEN
-                                                      icon_led_green
-                                                    WHEN yif_trm_cross_reference=>c_status-only_in_source THEN
-                                                      icon_led_red
-                                                    WHEN yif_trm_cross_reference=>c_status-different THEN
-                                                      icon_led_red
-                                                    WHEN yif_trm_cross_reference=>c_status-definition_missing THEN
-                                                      icon_led_red
-                                                    WHEN yif_trm_cross_reference=>c_status-sap_reference THEN
-                                                      icon_checked
-
-                                                    WHEN yif_trm_cross_reference=>c_status-subobject_not_assigned THEN
-                                                      icon_abap
-                                                    WHEN yif_trm_cross_reference=>c_status-to_delete THEN
-                                                      icon_abap ).
+      <ls_display>-severity             = lo_severity->of_status( <lo_reference_list>->get_data( )-status ).
 
       <ls_display>-show_where_used_list = icon_reference_list.
 
@@ -303,6 +285,7 @@ CLASS ycl_trm_cross_ref_analisys_alv IMPLEMENTATION.
 
     ENDLOOP.
   ENDMETHOD.
+
 
   METHOD on_click.
     ASSIGN alv_dependencies_data[ row ] TO FIELD-SYMBOL(<ls_alv_output>).
@@ -320,6 +303,7 @@ CLASS ycl_trm_cross_ref_analisys_alv IMPLEMENTATION.
 
     ENDCASE.
   ENDMETHOD.
+
 
   METHOD on_click_on_show_where_used_l.
     " Show list of dependencies....
@@ -424,10 +408,13 @@ CLASS ycl_trm_cross_ref_analisys_alv IMPLEMENTATION.
 
     alv_where_is_used_objects->get_columns( )->set_optimize( ).
 
-    display_object_text( ai_t_where_is_used_objects[ 1 ] ).
+    IF ai_t_where_is_used_objects IS NOT INITIAL.
+      display_object_text( ai_t_where_is_used_objects[ 1 ] ).
+    ENDIF.
 
     alv_where_is_used_objects->display( ).
   ENDMETHOD.
+
 
   METHOD display_object_text.
     DATA(lv_text) = ycl_trm_tr_object=>get_code( iv_object_name = is_object-name
@@ -481,10 +468,11 @@ CLASS ycl_trm_cross_ref_analisys_alv IMPLEMENTATION.
     ai_o_object_text->set_toolbar_mode( 1 ).
   ENDMETHOD.
 
+
   METHOD display_dependency_text.
     TRY.
 
-        ai_t_field_comparison = is_alv_output-reference->compare( ai_rfc_destination ).
+        ai_t_field_comparison = is_alv_output-reference->compare( ).
 
         build_field_comparison_alv(
             |{ ai_rfc_destination } - { is_alv_output-reference_fragment } - { is_alv_output-reference_fragname }| ).
@@ -542,6 +530,7 @@ CLASS ycl_trm_cross_ref_analisys_alv IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
+
   METHOD on_objects_double_click.
     ASSIGN ai_t_where_is_used_objects[ row ] TO FIELD-SYMBOL(<ls_where_is_used_objects>).
     IF <ls_where_is_used_objects> IS NOT ASSIGNED.
@@ -563,6 +552,7 @@ CLASS ycl_trm_cross_ref_analisys_alv IMPLEMENTATION.
     ENDCASE.
   ENDMETHOD.
 
+
   METHOD on_objects_click.
     ASSIGN ai_t_where_is_used_objects[ row ] TO FIELD-SYMBOL(<ls_where_is_used_objects>).
     IF <ls_where_is_used_objects> IS NOT ASSIGNED.
@@ -577,11 +567,13 @@ CLASS ycl_trm_cross_ref_analisys_alv IMPLEMENTATION.
     ENDCASE.
   ENDMETHOD.
 
+
   METHOD free.
     IF split IS BOUND.
       split->free( ).
     ENDIF.
   ENDMETHOD.
+
 
   METHOD map_analyzed_objects.
     rt_result = VALUE #( FOR ls_analyzed_objects IN is_result_analized_objets_resu-analyzed_objects
@@ -596,6 +588,7 @@ CLASS ycl_trm_cross_ref_analisys_alv IMPLEMENTATION.
                            name     = ls_not_analyzed_objects-obj_name
                            analyzed = icon_cancel ) ).
   ENDMETHOD.
+
 
   METHOD on_double_click.
     ASSIGN alv_dependencies_data[ row ] TO FIELD-SYMBOL(<ls_alv_dependency_data>).
@@ -616,6 +609,7 @@ CLASS ycl_trm_cross_ref_analisys_alv IMPLEMENTATION.
     ENDCASE.
   ENDMETHOD.
 
+
   METHOD on_user_command.
     CASE e_salv_function.
 
@@ -627,9 +621,11 @@ CLASS ycl_trm_cross_ref_analisys_alv IMPLEMENTATION.
     ENDCASE.
   ENDMETHOD.
 
+
   METHOD display_analyzed_objects.
     NEW lcl_analized_objects_alv( io_container )->display( ai_t_analyzed_objects ).
   ENDMETHOD.
+
 
   METHOD build_field_comparison_alv.
     LOOP AT container_up_right->children INTO FINAL(lo_children).
@@ -674,6 +670,7 @@ CLASS ycl_trm_cross_ref_analisys_alv IMPLEMENTATION.
     alv_field_comparison->display( ).
   ENDMETHOD.
 
+
   METHOD show_containers.
     split->get_row_height( EXPORTING id     = 2
                            IMPORTING result = ai_dimension ).
@@ -696,6 +693,7 @@ CLASS ycl_trm_cross_ref_analisys_alv IMPLEMENTATION.
                                             width = 50  ).
     ENDIF.
   ENDMETHOD.
+
 
   METHOD on_objects_link_click.
     ASSIGN ai_t_where_is_used_objects[ row ] TO FIELD-SYMBOL(<ls_where_is_used_objects>).

@@ -3,8 +3,8 @@ CLASS ycl_trm_cross_ref_analisys DEFINITION
   CREATE PUBLIC.
 
   PUBLIC SECTION.
-    TYPES ty_t_objects      TYPE STANDARD TABLE OF cnvcdmccts_objects_set WITH DEFAULT KEY.
-    TYPES ty_t_objs_ref_tab TYPE STANDARD TABLE OF cnvcdmccts_objs_ref WITH DEFAULT KEY.
+    TYPES ty_t_objects      TYPE yif_trm_xref_repository=>ty_t_objects.
+    TYPES ty_t_objs_ref_tab TYPE yif_trm_xref_repository=>ty_t_references.
 
     TYPES: BEGIN OF ty_s_pre_object_analisys,
              analyzed_objects     TYPE ty_t_objects,
@@ -23,21 +23,26 @@ CLASS ycl_trm_cross_ref_analisys DEFINITION
       RETURNING VALUE(rs_analysis) TYPE ty_s_return
       RAISING   ycx_trm_cross_reference.
 
+    "! @parameter iv_rfc_comparison | Destination system
+    "! @parameter io_repository | Local repository access; real one if not supplied
+    "! @parameter io_source_system | Local system; real one if not supplied
+    "! @parameter io_destination_system | Destination system; real one if not supplied
     METHODS constructor
-      IMPORTING iv_rfc_comparison TYPE rfcdes-rfcdest.
+      IMPORTING iv_rfc_comparison        TYPE rfcdes-rfcdest
+                io_repository            TYPE REF TO yif_trm_xref_repository OPTIONAL
+                io_source_system         TYPE REF TO yif_trm_xref_system     OPTIONAL
+                io_destination_system    TYPE REF TO yif_trm_xref_system     OPTIONAL.
 
   PRIVATE SECTION.
-    DATA ai_t_namespace       TYPE STANDARD TABLE OF /sdf/cmo_namespace_long WITH DEFAULT KEY.
-    DATA ai_rfc_destination   TYPE rfcdes-rfcdest.
-    DATA ai_t_order_fragments TYPE ycl_trm_cross_ref_analisys=>ty_t_objects.
+    DATA ai_o_repository         TYPE REF TO yif_trm_xref_repository.
+    DATA ai_o_source_system      TYPE REF TO yif_trm_xref_system.
+    DATA ai_o_destination_system TYPE REF TO yif_trm_xref_system.
+    DATA ai_o_factory            TYPE REF TO ycl_trm_xref_reference_factory.
+    DATA ai_t_order_fragments    TYPE ycl_trm_cross_ref_analisys=>ty_t_objects.
 
     METHODS prepare_importing_objects
       IMPORTING it_objects        TYPE ty_t_objects
       RETURNING VALUE(rs_objects) TYPE ty_s_pre_object_analisys.
-
-    METHODS is_sap_object
-      IMPORTING is_object               TYPE cnvcdmccts_objects_set
-      RETURNING VALUE(rv_is_sap_object) TYPE abap_bool.
 
     METHODS methods_exists
       IMPORTING is_object               TYPE cnvcdmccts_objects_set
@@ -59,7 +64,8 @@ CLASS ycl_trm_cross_ref_analisys DEFINITION
 
     METHODS check_against_rfc
       IMPORTING it_result                TYPE ycl_trm_cross_ref_analisys=>ty_t_result
-      RETURNING VALUE(rt_reference_list) TYPE ycl_trm_cross_ref_analisys=>ty_t_result.
+      RETURNING VALUE(rt_reference_list) TYPE ycl_trm_cross_ref_analisys=>ty_t_result
+      RAISING   ycx_trm_cross_reference.
 
     METHODS check_not_sap_object
       IMPORTING it_result                TYPE ycl_trm_cross_ref_analisys=>ty_t_result
@@ -67,7 +73,8 @@ CLASS ycl_trm_cross_ref_analisys DEFINITION
 
     METHODS get_with_fragments
       IMPORTING it_objects       TYPE ycl_trm_cross_ref_analisys=>ty_t_objects
-      RETURNING VALUE(rt_result) TYPE ycl_trm_cross_ref_analisys=>ty_t_objects.
+      RETURNING VALUE(rt_result) TYPE ycl_trm_cross_ref_analisys=>ty_t_objects
+      RAISING   ycx_trm_cross_reference.
 
     METHODS check_methods
       IMPORTING it_result                TYPE ycl_trm_cross_ref_analisys=>ty_t_result
@@ -91,12 +98,22 @@ ENDCLASS.
 
 
 CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
-  METHOD constructor.
-    ai_rfc_destination = iv_rfc_comparison.
-    CALL FUNCTION '/SDF/CMO_NAMESPACE_INFO'
-      TABLES et_namespace = ai_t_namespace.
 
-    ycl_trm_cross_ref_describe_obj=>free_cache( ).
+  METHOD constructor.
+    ai_o_repository = COND #( WHEN io_repository IS BOUND
+                              THEN io_repository
+                              ELSE NEW ycl_trm_xref_repository( iv_rfc_comparison ) ).
+
+    ai_o_source_system = COND #( WHEN io_source_system IS BOUND
+                                 THEN io_source_system
+                                 ELSE NEW ycl_trm_cross_ref_describe_obj( 'NONE' ) ).
+
+    ai_o_destination_system = COND #( WHEN io_destination_system IS BOUND
+                                      THEN io_destination_system
+                                      ELSE NEW ycl_trm_cross_ref_describe_obj( iv_rfc_comparison ) ).
+
+    ai_o_factory = NEW #( io_source_system      = ai_o_source_system
+                          io_destination_system = ai_o_destination_system ).
   ENDMETHOD.
 
   METHOD run.
@@ -106,9 +123,9 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
 
     ai_t_order_fragments = get_with_fragments( it_objects ).
 
-    FINAL(ls_request_objets_resume) = prepare_importing_objects( ai_t_order_fragments ).
+    DATA(ls_request_objets_resume) = prepare_importing_objects( ai_t_order_fragments ).
 
-    FINAL(lt_cross_reference) = get_cross_reference( ls_request_objets_resume-analyzed_objects ).
+    DATA(lt_cross_reference) = get_cross_reference( ls_request_objets_resume-analyzed_objects ).
     IF lt_cross_reference IS INITIAL.
       RETURN.
     ENDIF.
@@ -149,33 +166,20 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
 
     RETURN VALUE ty_s_return( analized_objets_resume = ls_request_objets_resume
                               result                 = VALUE #( FOR ls_result IN lt_result
-                                                                ( ycl_trm_cross_ref=>create( ls_result ) ) ) ).
+                                                                ( ai_o_factory->create( ls_result ) ) ) ).
   ENDMETHOD.
 
   METHOD get_cross_reference.
-    DATA lt_messages  TYPE TABLE OF cnvcdmc_messages.
-*---------------------------------------------------------------------
-* Add additional reference for CPUB, CPRI, CPRO ( con los métodos )
-*---------------------------------------------------------------------
-    DATA lt_seomethod TYPE STANDARD TABLE OF vseomethod WITH DEFAULT KEY.
-    DATA lt_seoredef  TYPE STANDARD TABLE OF seoredef WITH DEFAULT KEY.
-
     DATA(lt_objects) = it_objects.
     IF lt_objects IS INITIAL.
-      FINAL(lo_log) = ycl_trm_logger=>new( ).
-      MESSAGE s019(ytrm) INTO FINAL(lv_message) ##NEEDED.
+      DATA(lo_log) = ycl_trm_logger=>new( ).
+      MESSAGE s019(ytrm) INTO DATA(lv_message) ##NEEDED.
       lo_log->add_message( CORRESPONDING #( sy ) ).
       RAISE EXCEPTION NEW ycx_trm_cross_reference( logger = lo_log ).
       RETURN.
     ENDIF.
 
-    CALL FUNCTION '/SDF/TEAP_GET_REF_OBJECTS'
-      TABLES     it_objs                    = lt_objects
-                 it_obj_ref_tab             = rt_cross_reference
-                 et_messages                = lt_messages
-      EXCEPTIONS no_objs_specified_for_anal = 1
-                 no_ref_found               = 2
-                 OTHERS                     = 3.
+    rt_cross_reference = ai_o_repository->get_references( lt_objects ).
 
     DELETE rt_cross_reference WHERE     ref_pgmid    IS INITIAL
                                     AND ref_obj_type IS INITIAL
@@ -196,14 +200,8 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
     SORT lt_methods BY obj_name ASCENDING.
     DELETE ADJACENT DUPLICATES FROM lt_methods.
 
-    " TODO: variable is assigned but only used in commented-out code (ABAP cleaner)
-    FINAL(lt_meth) = lt_methods.
-    " TODO: variable is assigned but only used in commented-out code (ABAP cleaner)
-    FINAL(lt_et_meth) = lt_methods.
-*    CALL FUNCTION '/SDF/TEAP_RESOLVE_METH'
-*      TABLES it_objs = lt_meth
-*             et_objs = lt_et_meth
-*             tt_meth = lt_methods.
+    " Esta funcion da dump si el método está definido en una interfaz
+    lt_methods = ai_o_repository->resolve_methods( lt_methods ).
 
     LOOP AT lt_methods ASSIGNING FIELD-SYMBOL(<ls_method>).
 
@@ -223,7 +221,7 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
 
           SPLIT <ls_method>-obj_name+30(90) AT '~'
                 " TODO: variable is assigned but never used (ABAP cleaner)
-                INTO FINAL(lv_intf_name) FINAL(lv_meth_obj_name).
+                INTO DATA(lv_intf_name) DATA(lv_meth_obj_name).
 
           INSERT VALUE cnvcdmccts_objs_ref( pgmid        = 'LIMU'
                                             obj_type     = 'METH'
@@ -246,42 +244,18 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
 
     LOOP AT lt_class_parts ASSIGNING FIELD-SYMBOL(<ls_class_part>).
 
-      CONCATENATE 'SVRS_GET_VERSION_' <ls_class_part>-obj_type '_40'
-                  INTO FINAL(lv_func_name).
+      DATA(lt_class_part_methods) = ai_o_repository->get_class_part_methods(
+                                         iv_part       = <ls_class_part>-obj_type
+                                         iv_class_name = <ls_class_part>-obj_name ).
 
-      CLEAR: lt_seomethod,
-             lt_seoredef.
-
-      CALL FUNCTION lv_func_name
-        EXPORTING  object_name           = CONV vrsd-objname( <ls_class_part>-obj_name )
-                   versno                = CONV vrsd-versno( '00000' )
-        TABLES     pvseomethod           = lt_seomethod
-                   pseoredef             = lt_seoredef
-        EXCEPTIONS no_version            = 1
-                   system_failure        = 2
-                   communication_failure = 3
-                   OTHERS                = 4.
-
-      LOOP AT lt_seomethod ASSIGNING FIELD-SYMBOL(<ls_seomethod>).
+      LOOP AT lt_class_part_methods ASSIGNING FIELD-SYMBOL(<lv_class_part_method>).
 
         INSERT VALUE cnvcdmccts_objs_ref( pgmid        = <ls_class_part>-pgmid
                                           obj_type     = <ls_class_part>-obj_type
                                           obj_name     = <ls_class_part>-obj_name
                                           ref_pgmid    = 'LIMU'
                                           ref_obj_type = 'METH'
-                                          ref_obj_name = |{ <ls_class_part>-obj_name }~{ <ls_seomethod>-cmpname }| )
-               INTO TABLE rt_cross_reference.
-
-      ENDLOOP.
-
-      LOOP AT lt_seoredef ASSIGNING FIELD-SYMBOL(<ls_seoredef>).
-
-        INSERT VALUE cnvcdmccts_objs_ref( pgmid        = <ls_class_part>-pgmid
-                                          obj_type     = <ls_class_part>-obj_type
-                                          obj_name     = <ls_class_part>-obj_name
-                                          ref_pgmid    = 'LIMU'
-                                          ref_obj_type = 'METH'
-                                          ref_obj_name = |{ <ls_class_part>-obj_name }~{ <ls_seoredef>-mtdname }| )
+                                          ref_obj_name = |{ <ls_class_part>-obj_name }~{ <lv_class_part_method> }| )
                INTO TABLE rt_cross_reference.
 
       ENDLOOP.
@@ -303,18 +277,18 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
     " Only cross-check on supported types:
     CONCATENATE 'DOMA DOMD DTEL DTED SHLP SHLD ENQU ENQD VIEW VIED'
                 'TABL TABD TTYP TTYD TYPE TYPD PROG REPS FUNC METH CLAS INTF'
-                'CPUB CPRI CPRO CLSD DYNP FUGR DDLS TRAN ENHO VKOS CFDF' INTO FINAL(lv_supported_types_string)
+                'CPUB CPRI CPRO CLSD DYNP FUGR DDLS TRAN ENHO VKOS CFDF' INTO DATA(lv_supported_types_string)
                 SEPARATED BY space.
 
-    SPLIT lv_supported_types_string AT space INTO TABLE FINAL(lt_suported_types).
-    LOOP AT lt_objects INTO FINAL(ls_objects).
+    SPLIT lv_supported_types_string AT space INTO TABLE DATA(lt_suported_types).
+    LOOP AT lt_objects INTO DATA(ls_objects).
 
       IF NOT line_exists( lt_suported_types[ table_line = ls_objects-obj_type ] ).
         INSERT ls_objects INTO TABLE rs_objects-not_analyzed_objects.
         CONTINUE.
       ENDIF.
 
-      IF is_sap_object( ls_objects ).
+      IF ai_o_repository->is_sap_object( ls_objects ).
         INSERT ls_objects INTO TABLE rs_objects-not_analyzed_objects.
         CONTINUE.
       ENDIF.
@@ -340,40 +314,6 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
     DELETE ADJACENT DUPLICATES FROM rs_objects-not_analyzed_objects.
   ENDMETHOD.
 
-  METHOD is_sap_object.
-    DATA ls_e071      TYPE e071.
-    DATA lv_namespace TYPE trnspace-namespace.
-    DATA ls_namespace TYPE /sdf/cmo_namespace_long.
-
-    ls_e071-pgmid    = is_object-pgmid.
-    ls_e071-object   = is_object-obj_type.
-    ls_e071-obj_name = is_object-obj_name.
-
-    IF ls_e071-object = 'FUNC'.
-      CALL FUNCTION '/SDF/TEAP_TR_CHECK_TYPE'
-        EXPORTING wi_e071      = ls_e071
-        IMPORTING ev_namespace = lv_namespace.
-    ELSE.
-      CALL FUNCTION 'TR_CHECK_TYPE'
-        EXPORTING wi_e071      = ls_e071
-        IMPORTING ev_namespace = lv_namespace.
-    ENDIF.
-
-* Check if the name space is SAP or CUST
-    IF lv_namespace <> '/0SAP/' AND lv_namespace <> '/0CUST/'.
-      READ TABLE ai_t_namespace INTO ls_namespace WITH KEY namespace = lv_namespace.
-      IF sy-subrc = 0.
-        IF ls_namespace-ns_info = 'SAP'.
-          lv_namespace = '/0SAP/'.
-        ELSE.
-          lv_namespace = '/0CUST/'.
-        ENDIF.
-      ELSE.
-        lv_namespace = '/0CUST/'.
-      ENDIF.
-    ENDIF.
-  ENDMETHOD.
-
   METHOD methods_exists.
     DATA lv_cls_name2  TYPE tmdir-classname.
     DATA lv_meth2      TYPE eu_lname.
@@ -395,12 +335,8 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
     CONDENSE lv_meth2 NO-GAPS.
     lv_meth_name2 = lv_meth2.
 
-    CALL FUNCTION 'RPY_EXISTENCE_CHECK_METH'
-      EXPORTING  class     = lv_cls_name2
-                 method    = lv_meth_name2
-      EXCEPTIONS not_exist = 1.
-
-    RETURN xsdbool( sy-subrc = 0 ).
+    RETURN ai_o_repository->method_exists( iv_class_name  = lv_cls_name2
+                                           iv_method_name = lv_meth_name2 ).
   ENDMETHOD.
 
   METHOD build_reference_list.
@@ -410,11 +346,7 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
 
     LOOP AT it_cross_reference ASSIGNING FIELD-SYMBOL(<ls_cross_reference>).
 
-      CALL FUNCTION 'TR_GET_PGMID_FOR_OBJECT'
-        EXPORTING  iv_object      = <ls_cross_reference>-ref_obj_type
-        EXCEPTIONS illegal_object = 1
-                   OTHERS         = 2.
-      IF sy-subrc <> 0.
+      IF NOT ai_o_repository->has_own_pgmid( <ls_cross_reference>-ref_obj_type ).
         CONTINUE. " Is subobject...
       ENDIF.
 
@@ -455,22 +387,16 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
       ls_cross_reference-ref_obj_name = <ls_reference_list>-reference_fragname.
       ls_cross_reference-ref_obj_type = <ls_reference_list>-reference_fragment.
 
-      DATA(lt_cross_reference) = VALUE ty_t_objs_ref_tab( ( ls_cross_reference ) ).
-      DATA(lt_cross_reference_changed) = VALUE ty_t_objs_ref_tab( ).
-      PERFORM convert_ref_objects IN PROGRAM /sdf/saplteap_main
-        TABLES lt_cross_reference
-               lt_cross_reference_changed
-        USING  'NONE'
-               ai_rfc_destination.
+      DATA(lt_cross_reference_changed) = ai_o_repository->normalize_reference( ls_cross_reference ).
 
-      FINAL(lv_lines) = lines( lt_cross_reference_changed ).
+      DATA(lv_lines) = lines( lt_cross_reference_changed ).
       IF lv_lines = 0.
         CONTINUE.
       ENDIF.
 
-      FINAL(lv_ref_name) = lt_cross_reference_changed[ lv_lines ]-ref_obj_name.
-      FINAL(lv_ref_pgimd) = lt_cross_reference_changed[ lv_lines ]-ref_pgmid.
-      FINAL(lv_ref_type) = lt_cross_reference_changed[ lv_lines ]-ref_obj_type.
+      DATA(lv_ref_name) = lt_cross_reference_changed[ lv_lines ]-ref_obj_name.
+      DATA(lv_ref_pgimd) = lt_cross_reference_changed[ lv_lines ]-ref_pgmid.
+      DATA(lv_ref_type) = lt_cross_reference_changed[ lv_lines ]-ref_obj_type.
 
       ASSIGN rt_reference_list[ reference_fragname = lv_ref_name
                                 reference_fragment = lv_ref_type
@@ -530,13 +456,19 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
       IF <ls_reference_list>-reference_fragment = 'FUNC' AND (    <ls_reference_list>-reference_fragname CP 'DEQUEUE_*'
                                                                OR <ls_reference_list>-reference_fragname CP 'ENQUEUE_*' ).
 
-        FINAL(lv_lock_object_name) = <ls_reference_list>-reference_fragname+8.
+        " The lock module is generated from the lock object: only the lock object has to be checked
+        DATA(lv_lock_object_name) = <ls_reference_list>-reference_fragname+8.
         IF line_exists( it_importing_objects[ pgmid    = 'R3TR'
                                               obj_type = 'ENQU'
                                               obj_name = lv_lock_object_name ] ).
-
+          <ls_reference_list>-status = yif_trm_cross_reference=>c_status-also_in_transport_request.
+        ELSEIF ai_o_destination_system->object_exists( iv_pgmid    = 'R3TR'
+                                                       iv_object   = 'ENQU'
+                                                       iv_obj_name = CONV #( lv_lock_object_name ) ).
+          <ls_reference_list>-status = yif_trm_cross_reference=>c_status-exist_in_destination.
+        ELSE.
+          <ls_reference_list>-status = yif_trm_cross_reference=>c_status-only_in_source.
         ENDIF.
-        <ls_reference_list>-status = yif_trm_cross_reference=>c_status-also_in_transport_request.
         CONTINUE.
       ENDIF.
 
@@ -553,14 +485,6 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD check_against_rfc.
-    DATA lt_comparison TYPE vrs_compare_item_tab.
-    " TODO: variable is assigned but never used (ABAP cleaner)
-    DATA ls_rfcsi_a    TYPE rfcsi.
-    " TODO: variable is assigned but never used (ABAP cleaner)
-    DATA ls_rfcsi_b    TYPE rfcsi.
-    " TODO: variable is assigned but never used (ABAP cleaner)
-    DATA lt_nonvers    TYPE TABLE OF e071.
-
     DATA(lt_objects) = VALUE scwb_t_e071( FOR is_reference_list IN it_result WHERE ( status IS INITIAL )
                                           ( pgmid    = is_reference_list-reference_fragid
                                             object   = is_reference_list-reference_fragment
@@ -575,36 +499,7 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
     " Eliminamos las entradas marcadas como borradas para la comparación
     DELETE lt_objects WHERE objfunc = yif_trm_tr_object=>function-deleted.
 
-    FINAL(lv_filter_lang) = abap_true.
-    FINAL(lv_delete_lang) = ' '.
-    CALL FUNCTION 'SVRS_MASSCOMPARE_ACT_OBJECTS'
-      EXPORTING  it_e071                = lt_objects
-*                 IV_RFCDEST_A           =
-                 iv_rfcdest_b           = ai_rfc_destination
-                 iv_filter_lang         = lv_filter_lang
-                 iv_delete_lang         = lv_delete_lang
-*                 IV_ABAP_IGNORE_CASE    = 'X'
-*                 IV_ABAP_CONDENSE       = 'X'
-*                 IV_ABAP_IGNORE_COMMENTS = 'X'
-*                 IV_ABAP_EQUIVALENCE    = 'X'
-                 iv_with_gui_progress   = abap_false
-                 iv_ignore_report_text  = 'X'
-      IMPORTING  et_compare_items       = lt_comparison
-                 es_rfcsi_a             = ls_rfcsi_a
-                 es_rfcsi_b             = ls_rfcsi_b
-                 et_nonversionable_e071 = lt_nonvers
-      EXCEPTIONS rfc_error              = 1
-                 not_supported          = 2
-                 OTHERS                 = 3.
-    CASE sy-subrc.
-      WHEN 0.
-      WHEN 1.
-        MESSAGE i008(tsys) WITH ai_rfc_destination.
-        FINAL(lx_tr) = NEW ycx_trm_transport_request( ).
-        RAISE EXCEPTION lx_tr.
-      WHEN OTHERS.
-        MESSAGE i015(tsys).
-    ENDCASE.
+    FINAL(lt_comparison) = ai_o_destination_system->compare_versions( lt_objects ).
 
     " Not comparable = 'X' es que no existe en destino...
 
@@ -645,81 +540,29 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD check_not_sap_object.
-    DATA ls_tadir     TYPE tadir.
-    DATA lv_namespace TYPE trnspace-namespace.
 
     rt_reference_list = it_result.
-
     LOOP AT rt_reference_list ASSIGNING FIELD-SYMBOL(<ls_reference_list>) WHERE status IS INITIAL.
 
-      PERFORM get_namespace IN PROGRAM /sdf/saplteap_main
-        USING    <ls_reference_list>-reference_fragid
-                 <ls_reference_list>-reference_fragment
-                 <ls_reference_list>-reference_fragname
-                 'NONE'
-        CHANGING ls_tadir
-                 lv_namespace.
-      IF lv_namespace <> '/0SAP/'.
-        CONTINUE.
+      IF ai_o_repository->is_sap_object( VALUE #( obj_name = <ls_reference_list>-reference_fragname
+                                 pgmid    = <ls_reference_list>-reference_fragid
+                                 obj_type = <ls_reference_list>-reference_fragment ) ).
+
+        <ls_reference_list>-status = yif_trm_cross_reference=>c_status-sap_reference.
+
       ENDIF.
 
-      <ls_reference_list>-status = yif_trm_cross_reference=>c_status-sap_reference.
-
     ENDLOOP.
+
   ENDMETHOD.
 
   METHOD get_with_fragments.
-    TYPES ty_t_e071 TYPE STANDARD TABLE OF e071 WITH DEFAULT KEY.
-
-    DATA lt_comparison TYPE vrs_compare_item_tab.
-    DATA lt_nonvers    TYPE TABLE OF e071.
-
-    FINAL(lv_filter_lang) = abap_true.
-    FINAL(lv_delete_lang) = ' '.
-
     DATA(lt_objects_to_compare) = it_objects.
     DELETE lt_objects_to_compare WHERE obj_type = 'DEVC'. "<-- Los paquetes devuelve todo el contenido, no es necesario
 
-    CALL FUNCTION 'SVRS_MASSCOMPARE_ACT_OBJECTS'
-      EXPORTING  it_e071                = CORRESPONDING ty_t_e071( lt_objects_to_compare MAPPING object = obj_type )
-*                 IV_RFCDEST_A           =
-                 iv_rfcdest_b           = 'NONE'
-                 iv_filter_lang         = lv_filter_lang
-                 iv_delete_lang         = lv_delete_lang
-*                 IV_ABAP_IGNORE_CASE    = 'X'
-*                 IV_ABAP_CONDENSE       = 'X'
-*                 IV_ABAP_IGNORE_COMMENTS = 'X'
-*                 IV_ABAP_EQUIVALENCE    = 'X'
-                 iv_with_gui_progress   = abap_false
-                 iv_ignore_report_text  = 'X'
-      IMPORTING  et_compare_items       = lt_comparison
-*                 es_rfcsi_a             = ls_rfcsi_a
-*                 es_rfcsi_b             = ls_rfcsi_b
-                 et_nonversionable_e071 = lt_nonvers
-      EXCEPTIONS rfc_error              = 1
-                 not_supported          = 2
-                 OTHERS                 = 3.
-    CASE sy-subrc.
-      WHEN 0.
-      WHEN 1.
-        MESSAGE i008(tsys) WITH ai_rfc_destination.
-        FINAL(lx_tr) = NEW ycx_trm_transport_request( ).
-        RAISE EXCEPTION lx_tr.
-      WHEN OTHERS.
-        MESSAGE i015(tsys).
-    ENDCASE.
-
     rt_result = it_objects.
 
-    rt_result = VALUE #( BASE rt_result FOR ls_comparison IN lt_comparison
-                         ( pgmid    = ls_comparison-fragid
-                           obj_type = ls_comparison-fragment
-                           obj_name = ls_comparison-fragname ) ).
-
-    rt_result = VALUE #( BASE rt_result FOR ls_nonvers IN lt_nonvers
-                         ( pgmid    = ls_nonvers-pgmid
-                           obj_type = ls_nonvers-object
-                           obj_name = ls_nonvers-obj_name ) ).
+    INSERT LINES OF ai_o_repository->get_fragments( lt_objects_to_compare ) INTO TABLE rt_result.
 
     SORT rt_result.
     DELETE ADJACENT DUPLICATES FROM rt_result.
@@ -731,17 +574,36 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
     LOOP AT rt_reference_list ASSIGNING FIELD-SYMBOL(<ls_reference_list>) WHERE     status             IS INITIAL
                                                                                 AND reference_fragment  = 'METH'.
 
-      FINAL(lo_method_cross_ref) = CAST ycl_trm_cross_reference_meth( ycl_trm_cross_ref=>create( <ls_reference_list> ) ).
+      DATA(lo_method_cross_ref) = CAST ycl_trm_cross_reference_meth( ai_o_factory->create( <ls_reference_list> ) ).
 
       TRY.
-          FINAL(ls_method_descr_in_currnt_syst) = lo_method_cross_ref->describe( ).
-        CATCH ycx_trm_transport_request.
+          DATA(ls_method_descr_in_currnt_syst) = lo_method_cross_ref->describe( ).
+        CATCH ycx_trm_cross_reference.
       ENDTRY.
 
       " Validamos si existe en destino
-      IF lo_method_cross_ref->exists( ai_rfc_destination ).
+      IF lo_method_cross_ref->exists( ).
         <ls_reference_list>-status = yif_trm_cross_reference=>c_status-exist_in_destination.
+
+        " Validamos si hay cambios en la definicion, para comprobar que no nos falte ningún parametro importing o algo
+        IF line_exists( ai_t_order_fragments[ pgmid    = ls_method_descr_in_currnt_syst-defined_in-object_pgmid
+                                              obj_name = ls_method_descr_in_currnt_syst-defined_in-object_name
+                                              obj_type = ls_method_descr_in_currnt_syst-defined_in-object_type ] ).
+
+          <ls_reference_list>-status = yif_trm_cross_reference=>c_status-definition_also_in_trans_req.
+          CONTINUE.
+        ENDIF.
+
+        DATA(lt_comparison) = lo_method_cross_ref->compare( ).
+        <ls_reference_list>-status = COND #( WHEN line_exists( lt_comparison[ severity = icon_led_red ] ) THEN
+                                               yif_trm_cross_reference=>c_status-method_def_dif_in_dest_w_err
+                                             WHEN line_exists( lt_comparison[ severity = icon_led_yellow ] ) THEN
+                                               yif_trm_cross_reference=>c_status-method_definition_dif_in_dest
+                                             ELSE
+                                               yif_trm_cross_reference=>c_status-exist_in_destination ).
+
         CONTINUE.
+
       ENDIF.
 
       " Esto solo aplica si está definido en una clase, no en una interfaz
@@ -758,7 +620,7 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
 
       " Validamos si la implementación está en la orden ( puede venir con clas+alias o clas+intf~name o clas+intf~alias o clas+name )
       DATA(lv_fragname) = <ls_reference_list>-reference_fragname.
-      SPLIT <ls_reference_list>-reference_fragname+30 AT '~' INTO FINAL(lv_interface_or_method_name) FINAL(lv_method_name_or_empty).
+      SPLIT <ls_reference_list>-reference_fragname+30 AT '~' INTO DATA(lv_interface_or_method_name) DATA(lv_method_name_or_empty).
       DATA(lv_method_name) = lv_method_name_or_empty.
       IF lv_method_name IS INITIAL.
         lv_method_name = lv_interface_or_method_name.
@@ -787,18 +649,16 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
       ENDIF.
 
       " Validamos si hay cambios
-      FINAL(lt_comparison) = lo_method_cross_ref->compare( ai_rfc_destination ).
-
-      " TODO: variable is assigned but never used (ABAP cleaner)
-      LOOP AT lt_comparison ASSIGNING FIELD-SYMBOL(<ls_comparison>) WHERE severity <> icon_led_green.
-        <ls_reference_list>-status = yif_trm_cross_reference=>c_status-method_definition_dif_in_dest.
-        EXIT.
-      ENDLOOP.
-      IF sy-subrc <> 0.
-        <ls_reference_list>-status = yif_trm_cross_reference=>c_status-equal_in_destination.
-      ENDIF.
+      lt_comparison = lo_method_cross_ref->compare( ).
+      <ls_reference_list>-status = COND #( WHEN line_exists( lt_comparison[ severity = icon_led_red ] ) THEN
+                                             yif_trm_cross_reference=>c_status-method_def_dif_in_dest_w_err
+                                           WHEN line_exists( lt_comparison[ severity = icon_led_yellow ] ) THEN
+                                             yif_trm_cross_reference=>c_status-method_definition_dif_in_dest
+                                           ELSE
+                                             yif_trm_cross_reference=>c_status-exist_in_destination ).
 
     ENDLOOP.
+
   ENDMETHOD.
 
   METHOD check_interfaces.
@@ -830,9 +690,10 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
 
       " Describe interface in destination system
       TRY.
-          FINAL(lt_descr_destination_system) = CAST ycl_trm_cross_reference_obj( ycl_trm_cross_ref=>create( <ls_result> ) )->describe(
-              ai_rfc_destination ).
-        CATCH ycx_trm_transport_request.
+          DATA(lt_intf_comparison) = CAST ycl_trm_cross_reference_obj( ai_o_factory->create( <ls_result> ) )->yif_trm_cross_reference~compare( ).
+          DATA(lt_descr_destination_system) = CAST ycl_trm_cross_reference_obj( ai_o_factory->create( <ls_result> ) )->describe(
+              iv_in_destination = abap_true ).
+        CATCH ycx_trm_cross_reference.
       ENDTRY.
 
       " De cada uno del uso, buscamos exactametne que se está usando y si no existe en destino, damos error
@@ -857,6 +718,52 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
           IF line_exists( lt_descr_destination_system[
                               sub_object_type       = <ls_interface_cross_reference>-ref_obj_type
                               sub_object_name_alias = lv_interface_ref_obj_name ] ).
+            CONTINUE.
+          ENDIF.
+
+          " Caso de una estructura de constantes... Nos llega que usa la constante, no el campo concreto de la constante.
+          " En caso de que haya diferencias entre los campos de la estructura de la constante, marcamos para que revise el usuario si realmente se está usando
+          IF <ls_interface_cross_reference>-ref_obj_type = 'ATRB'.
+
+            " Si no existe en el sistema destinto...
+            LOOP AT lt_intf_comparison TRANSPORTING NO FIELDS WHERE type = 'ATRB' AND name CP |{ lv_interface_ref_obj_name }*|.
+              EXIT.
+            ENDLOOP.
+            IF sy-subrc <> 0.
+              <ls_object_list>-severity = icon_led_red.
+              IF <ls_object_list>-logger IS NOT BOUND.
+                <ls_object_list>-logger = ycl_trm_logger=>new( ).
+              ENDIF.
+              <ls_object_list>-logger->add_text(
+                  |{ <ls_interface_cross_reference>-ref_obj_type } { <ls_interface_cross_reference>-ref_obj_name } not exists in destination| ).
+
+              <ls_result>-status = yif_trm_cross_reference=>c_status-different.
+              CONTINUE.
+            ENDIF.
+
+            LOOP AT lt_intf_comparison TRANSPORTING NO FIELDS WHERE type = 'ATRB' AND name CP |{ lv_interface_ref_obj_name }*| AND severity <> icon_led_green.
+              EXIT.
+            ENDLOOP.
+            IF sy-subrc = 0.
+              <ls_object_list>-severity = icon_led_yellow.
+              IF <ls_object_list>-logger IS NOT BOUND.
+                <ls_object_list>-logger = ycl_trm_logger=>new( ).
+              ENDIF.
+
+              <ls_object_list>-logger->add_text(
+                  im_type = 'W'
+                  im_text = |{ <ls_interface_cross_reference>-ref_obj_type } { <ls_interface_cross_reference>-ref_obj_name } must be reviewed| ).
+
+              " Si hay alguno con error, se mantiene el error, sino se marca como warning
+              <ls_result>-status = COND #( WHEN <ls_result>-status = yif_trm_cross_reference=>c_status-different
+                                           THEN yif_trm_cross_reference=>c_status-different
+                                           ELSE yif_trm_cross_reference=>c_status-different_in_destination ).
+
+              CONTINUE.
+
+            ENDIF.
+
+            " Está igual en destino que en origen,
             CONTINUE.
           ENDIF.
 
@@ -899,14 +806,14 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
       LOOP AT <ls_result>-object_list ASSIGNING FIELD-SYMBOL(<ls_method_being_transported>) WHERE type = 'METH'.
 
         " Validar que la definición del método exista en destino
-        FINAL(lo_method_cross_ref) = CAST ycl_trm_cross_reference_meth( ycl_trm_cross_ref=>create(
-                                                                            VALUE #(
-                                                                                reference_fragid   = 'LIMU'
-                                                                                reference_fragment = 'METH'
-                                                                                reference_fragname = <ls_method_being_transported>-name ) ) ).
+        DATA(lo_method_cross_ref) = CAST ycl_trm_cross_reference_meth( ai_o_factory->create(
+                                                                           VALUE #(
+                                                                               reference_fragid   = 'LIMU'
+                                                                               reference_fragment = 'METH'
+                                                                               reference_fragname = <ls_method_being_transported>-name ) ) ).
 
         " Validamos si existe en destino
-        IF lo_method_cross_ref->exists( ai_rfc_destination ).
+        IF lo_method_cross_ref->exists( ).
           CONTINUE.
         ENDIF.
 
@@ -927,12 +834,9 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
     LOOP AT rt_result ASSIGNING FIELD-SYMBOL(<ls_reference_list>) WHERE     status             IS INITIAL
                                                                         AND reference_fragment  = 'DEVC'.
 
-      DATA(lv_exist) = abap_false.
-      CALL FUNCTION 'YTRM_FM_CROSS_REF_EXISTS' DESTINATION ai_rfc_destination
-        EXPORTING iv_pgmid    = <ls_reference_list>-reference_fragid
-                  iv_object   = <ls_reference_list>-reference_fragment
-                  iv_obj_name = <ls_reference_list>-reference_fragname
-        IMPORTING e_exist     = lv_exist.
+      DATA(lv_exist) = ai_o_destination_system->object_exists( iv_pgmid    = <ls_reference_list>-reference_fragid
+                                                               iv_object   = <ls_reference_list>-reference_fragment
+                                                               iv_obj_name = <ls_reference_list>-reference_fragname ).
 
       <ls_reference_list>-status = yif_trm_cross_reference=>c_status-only_in_source.
       IF lv_exist = abap_true.
@@ -941,4 +845,5 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
 
     ENDLOOP.
   ENDMETHOD.
+
 ENDCLASS.

@@ -181,6 +181,9 @@ CLASS YCL_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
       APPEND LINES OF im_t_e071k TO lt_e071k.
     ENDIF.
 
+    CLEAR ex_t_not_added.
+    DATA(lt_e071_requested) = lt_e071.
+
     " Si no hay errores el módulo de función sólo se ejecutara una vez
     " Si hay errores, en la segunda ejecución descartamos aquellos objetos
     " que han fallado y lo llamamos de nuevo sin ellos
@@ -210,6 +213,20 @@ CLASS YCL_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
 
       IF sy-subrc IS INITIAL.
         ai_o_log->info( |{ lines( lt_e071 ) } objects has been added to Transport Request| ).
+        LOOP AT lt_e071_requested ASSIGNING FIELD-SYMBOL(<ls_requested>).
+          IF NOT line_exists( lt_e071[ pgmid    = <ls_requested>-pgmid
+                                       object   = <ls_requested>-object
+                                       obj_name = <ls_requested>-obj_name ] ).
+            INSERT <ls_requested> INTO TABLE ex_t_not_added.
+          ENDIF.
+        ENDLOOP.
+        RETURN.
+      ELSEIF sy-index = 2.
+        ex_t_not_added = lt_e071_requested.
+        DATA(lv_not_added) = lines( ex_t_not_added ).
+        DATA(lv_code) = me->yif_trm_transport_request~get_code( ).
+        MESSAGE e021(ytrm) WITH lv_not_added lv_code INTO DATA(lv_message) ##NEEDED.
+        ai_o_log->add_from_system_variables( ).
         RETURN.
       ELSE.
         ai_o_log->warning( |The following objects has not been added to Transport Request| ).
@@ -636,7 +653,18 @@ CLASS YCL_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
 
       ENDIF.
 
+      IF sy-index >= im_max_wait_seconds.
+        EXIT.
+      ENDIF.
+
+      WAIT UP TO 1 SECONDS.
+
     ENDDO.
+
+    MESSAGE e020(ytrm) WITH lv_trokrr INTO DATA(lv_message) ##NEEDED.
+    ai_o_log->add_from_system_variables( ).
+    DATA(lx_tr) = transport_request_exception( ycx_trm_transport_request=>not_released_in_time ).
+    RAISE EXCEPTION lx_tr.
 
   ENDMETHOD.
 

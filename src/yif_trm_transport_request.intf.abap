@@ -42,6 +42,7 @@ interface YIF_TRM_TRANSPORT_REQUEST
     importing
       !IM_CHECK_RELEASED type ABAP_BOOL default ABAP_TRUE
       !IM_RELEASE_TASKS type ABAP_BOOL default ABAP_TRUE
+      !IM_MAX_WAIT_SECONDS type I default 120
     raising
       YCX_TRM_TRANSPORT_REQUEST .
   methods IS_RELEASED
@@ -52,6 +53,8 @@ interface YIF_TRM_TRANSPORT_REQUEST
       !IM_T_TRANSPORT_REQUEST type YIF_TRM_TRANSPORT_REQUEST=>TAB optional
       !IM_T_E071 type E071_T optional
       !IM_T_E071K type E071K_T optional
+    exporting
+      !EX_T_NOT_ADDED type E071_T
     raising
       YCX_TRM_TRANSPORT_REQUEST .
   methods GET_DESCRIPTION

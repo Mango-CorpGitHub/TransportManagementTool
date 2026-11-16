@@ -5,8 +5,11 @@ CLASS ycl_trm_compare_objects DEFINITION
 
   PUBLIC SECTION.
 
-    TYPES:
-      ty_t_request_keys TYPE STANDARD TABLE OF e071k WITH DEFAULT KEY .
+    INTERFACES yif_trm_compare_objects.
+
+    ALIASES compare FOR yif_trm_compare_objects~compare.
+
+    TYPES ty_t_request_keys TYPE yif_trm_compare_objects=>ty_t_request_keys.
     TYPES:
       BEGIN OF ty_s_objects,
         pgmid    TYPE string,
@@ -19,29 +22,14 @@ CLASS ycl_trm_compare_objects DEFINITION
     TYPES:
       tyt_objects TYPE STANDARD TABLE OF ty_s_objects WITH DEFAULT KEY .
 
-    TYPES: BEGIN OF ty_s_comparison.
-             INCLUDE TYPE vrs_compare_item.
-    TYPES:   objfunc      TYPE char01,
-             activity     TYPE string,
-             not_compared TYPE abap_bool,
-             keys         TYPE ty_t_request_keys,
-             lang         TYPE spras,
-           END OF ty_s_comparison.
-    TYPES: ty_t_comparison TYPE STANDARD TABLE OF ty_s_comparison WITH DEFAULT KEY .
+    TYPES ty_s_comparison TYPE yif_trm_compare_objects=>ty_s_comparison.
+    TYPES ty_t_comparison TYPE yif_trm_compare_objects=>ty_t_comparison.
 
     CLASS-METHODS create
       IMPORTING
         !iv_rfc_compare_destination TYPE rfcdest
       RETURNING
         VALUE(ro_as)                TYPE REF TO ycl_trm_compare_objects .
-    METHODS compare
-      IMPORTING
-*        !it_objects          TYPE tyt_objects
-        !it_objects          TYPE yif_trm_tr_object=>tab
-      RETURNING
-        VALUE(rt_comparison) TYPE ty_t_comparison
-      RAISING
-        ycx_trm_transport_request.
   PROTECTED SECTION.
   PRIVATE SECTION.
 
@@ -51,6 +39,12 @@ CLASS ycl_trm_compare_objects DEFINITION
       IMPORTING
         iv_rfc_compare_destination TYPE rfcdest.
 
+    "! Without SAP GUI (ADT services, background jobs), SAP's comparison of enhancements (ENHO)
+    "! creates GUI controls and the session is cancelled (CNTL_ERROR)
+    METHODS is_gui_available
+      RETURNING
+        VALUE(rv_available) TYPE abap_bool.
+
 ENDCLASS.
 
 
@@ -58,9 +52,11 @@ ENDCLASS.
 CLASS YCL_TRM_COMPARE_OBJECTS IMPLEMENTATION.
 
 
-  METHOD compare.
+  METHOD yif_trm_compare_objects~compare.
 
     " Code copied from SREPO ( SCREEN_0300_FORMS - FORM cal_data_0300 )
+
+    CLEAR et_messages.
 
     DATA lt_compare_items TYPE vrs_compare_item_tab.
     DATA ls_compare_item  LIKE LINE OF lt_compare_items.
@@ -91,6 +87,12 @@ CLASS YCL_TRM_COMPARE_OBJECTS IMPLEMENTATION.
     " Eliminamos las entradas marcadas como borradas para la comparación
     DELETE lt_objects WHERE objfunc = yif_trm_tr_object=>function-deleted.
 
+    " Sin SAP GUI, los enhancements no se comparan: se devuelven como no comparados
+    IF is_gui_available( ) = abap_false.
+      DATA(lt_enhancements) = VALUE scwb_t_e071( FOR ls_object IN lt_objects WHERE ( object = 'ENHO' ) ( ls_object ) ).
+      DELETE lt_objects WHERE object = 'ENHO'.
+    ENDIF.
+
     DATA lt_comparison TYPE vrs_compare_item_tab.
     DATA(lv_filter_lang) = abap_true.
     DATA(lv_delete_lang) = ' '.
@@ -119,11 +121,18 @@ CLASS YCL_TRM_COMPARE_OBJECTS IMPLEMENTATION.
     CASE sy-subrc.
       WHEN 0.
       WHEN 1.
-        MESSAGE i008(tsys) WITH _rfc_compare_destination.
-        data(lx_tr) = NEW ycx_trm_transport_request(  ).
-        RAISE EXCEPTION lx_tr.
+        RAISE EXCEPTION NEW ycx_trm_transport_request( textid      = ycx_trm_transport_request=>communication_error
+                                                       destination = _rfc_compare_destination ).
       WHEN OTHERS.
-        MESSAGE i015(tsys).
+        MESSAGE w015(tsys) INTO DATA(lv_message) ##NEEDED.
+        INSERT VALUE #( type       = sy-msgty
+                        id         = sy-msgid
+                        number     = sy-msgno
+                        message    = lv_message
+                        message_v1 = sy-msgv1
+                        message_v2 = sy-msgv2
+                        message_v3 = sy-msgv3
+                        message_v4 = sy-msgv4 ) INTO TABLE et_messages.
     ENDCASE.
 
     rt_comparison = CORRESPONDING #( lt_comparison ).
@@ -133,6 +142,7 @@ CLASS YCL_TRM_COMPARE_OBJECTS IMPLEMENTATION.
     DELETE ADJACENT DUPLICATES FROM rt_comparison COMPARING fragid fragment fragname pgmid object obj_name.
 
     " Add non versionable objects:
+    INSERT LINES OF lt_enhancements INTO TABLE lt_nonvers.
     LOOP AT lt_nonvers ASSIGNING FIELD-SYMBOL(<ls_nonvers>).
 
       " No meter duplicados
@@ -408,6 +418,17 @@ CLASS YCL_TRM_COMPARE_OBJECTS IMPLEMENTATION.
 
   METHOD constructor.
     _rfc_compare_destination = iv_rfc_compare_destination.
+  ENDMETHOD.
+
+
+  METHOD is_gui_available.
+    DATA lv_gui_available TYPE c LENGTH 1.
+
+    CALL FUNCTION 'GUI_IS_AVAILABLE'
+      IMPORTING
+        return = lv_gui_available.
+
+    rv_available = xsdbool( lv_gui_available IS NOT INITIAL ).
   ENDMETHOD.
 
 

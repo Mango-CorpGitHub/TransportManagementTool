@@ -44,4 +44,8 @@ INTERFACE yif_trm_logger
 
   METHODS warning IMPORTING im_text TYPE csequence.
 
+  METHODS display_fullscreen.
+
+  METHODS get_messages_table RETURNING VALUE(re_t_message) TYPE bal_t_msg.
+
 ENDINTERFACE.

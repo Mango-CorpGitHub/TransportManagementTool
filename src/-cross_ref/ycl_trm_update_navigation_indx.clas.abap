@@ -4,10 +4,15 @@ CLASS ycl_trm_update_navigation_indx DEFINITION
 
   PUBLIC SECTION.
 
+    "! @parameter io_wb_index | Workbench navigation index access; real one if not supplied
+    METHODS constructor
+      IMPORTING io_wb_index TYPE REF TO yif_trm_xref_wb_index OPTIONAL.
+
     METHODS update
       IMPORTING it_objects TYPE ycl_trm_cross_ref_analisys=>ty_t_objects.
 
   PRIVATE SECTION.
+    DATA ai_o_wb_index                 TYPE REF TO yif_trm_xref_wb_index.
     DATA ai_t_already_updated_includes TYPE STANDARD TABLE OF program WITH DEFAULT KEY.
 
     METHODS call_wb_tree_actualize
@@ -20,16 +25,20 @@ ENDCLASS.
 
 
 CLASS ycl_trm_update_navigation_indx IMPLEMENTATION.
+  METHOD constructor.
+    ai_o_wb_index = COND #( WHEN io_wb_index IS BOUND THEN io_wb_index ELSE NEW ycl_trm_xref_wb_index( ) ).
+  ENDMETHOD.
+
   METHOD update.
 
     LOOP AT it_objects ASSIGNING FIELD-SYMBOL(<ls_fragments>).
 
       IF <ls_fragments>-pgmid = 'R3TR' AND <ls_fragments>-obj_type = 'INTF'.
-        call_wb_tree_actualize( CONV #( <ls_fragments>-obj_name ) ).
+        call_wb_tree_actualize( CONV #( |CP_{ <ls_fragments>-obj_name }| ) ).
         CONTINUE.
       ENDIF.
 
-      IF <ls_fragments>-pgmid = 'R3TR' AND <ls_fragments>-obj_type = 'CLASS'.
+      IF <ls_fragments>-pgmid = 'R3TR' AND <ls_fragments>-obj_type = 'CLAS'.
         update_class( CONV #( <ls_fragments>-obj_name ) ).
         CONTINUE.
       ENDIF.
@@ -44,9 +53,6 @@ CLASS ycl_trm_update_navigation_indx IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD call_wb_tree_actualize.
-    " TODO: variable is assigned but never used (ABAP cleaner)
-    DATA lv_syntax_error TYPE c LENGTH 1.
-
     IF iv_program IS INITIAL.
       RETURN.
     ENDIF.
@@ -55,26 +61,18 @@ CLASS ycl_trm_update_navigation_indx IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    CALL FUNCTION 'WB_TREE_ACTUALIZE'
-      EXPORTING tree_name    = CONV program( |CP_{ iv_program }| )
-      IMPORTING syntax_error = lv_syntax_error.
+    ai_o_wb_index->actualize( iv_program ).
 
     INSERT iv_program INTO TABLE ai_t_already_updated_includes.
   ENDMETHOD.
 
   METHOD update_class.
 
-    cl_oo_classname_service=>get_all_class_includes( EXPORTING  class_name    = CONV #( iv_class_name )
-                                                     RECEIVING  result        = FINAL(lt_includes)
-                                                     EXCEPTIONS no_such_class = 1
-                                                                OTHERS        = 2 ).
-    IF sy-subrc <> 0.
-      RETURN.
-    ENDIF.
+    FINAL(lt_includes) = ai_o_wb_index->get_class_includes( CONV #( iv_class_name ) ).
 
     LOOP AT lt_includes ASSIGNING FIELD-SYMBOL(<lv_include>).
 
-      call_wb_tree_actualize( <lv_include> ).
+      call_wb_tree_actualize( |CP_{ <lv_include> }| ).
 
     ENDLOOP.
 
