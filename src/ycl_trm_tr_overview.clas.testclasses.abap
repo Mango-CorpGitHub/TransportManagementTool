@@ -171,7 +171,7 @@ CLASS ltc_overview IMPLEMENTATION.
 
   METHOD one_request.
     rt_requests = VALUE #( ( NEW ltd_request(
-                                 iv_code    = 'S4DK000001'
+                                 iv_code    = 'DEVK900001'
                                  it_entries = VALUE #( ( NEW ltd_object( iv_pgmid    = 'R3TR'
                                                                          iv_object   = 'CLAS'
                                                                          iv_obj_name = 'YCL_A' ) ) ) ) ) ).
@@ -194,14 +194,14 @@ CLASS ltc_overview IMPLEMENTATION.
 
   METHOD without_comparer.
     DATA(lt_requests) = VALUE yif_trm_transport_request=>tab(
-        ( NEW ltd_request( iv_code    = 'S4DK000001'
+        ( NEW ltd_request( iv_code    = 'DEVK900001'
                            it_entries = VALUE #( ( NEW ltd_object( iv_pgmid    = 'R3TR'
                                                                    iv_object   = 'PROG'
                                                                    iv_obj_name = 'YB' ) )
                                                  ( NEW ltd_object( iv_pgmid    = 'R3TR'
                                                                    iv_object   = 'CLAS'
                                                                    iv_obj_name = 'YCL_A' ) ) ) ) )
-        ( NEW ltd_request( iv_code    = 'S4DK000002'
+        ( NEW ltd_request( iv_code    = 'DEVK900002'
                            it_entries = VALUE #( ( NEW ltd_object( iv_pgmid    = 'R3TR'
                                                                    iv_object   = 'CLAS'
                                                                    iv_obj_name = 'YCL_A' ) ) ) ) ) ).
@@ -216,10 +216,10 @@ CLASS ltc_overview IMPLEMENTATION.
     cl_abap_unit_assert=>assert_equals( exp = ycl_trm_tr_overview=>c_comparison-not_requested
                                         act = ls_overview-entries[ 1 ]-comparison ).
     cl_abap_unit_assert=>assert_equals(
-        exp = VALUE ycl_trm_tr_overview=>ty_t_trkorr( ( 'S4DK000001' ) ( 'S4DK000002' ) )
+        exp = VALUE ycl_trm_tr_overview=>ty_t_trkorr( ( 'DEVK900001' ) ( 'DEVK900002' ) )
         act = ls_overview-entries[ 1 ]-requests ).
     cl_abap_unit_assert=>assert_equals(
-        exp = VALUE ycl_trm_tr_overview=>ty_t_trkorr( ( 'S4DK000001' ) )
+        exp = VALUE ycl_trm_tr_overview=>ty_t_trkorr( ( 'DEVK900001' ) )
         act = ls_overview-entries[ 2 ]-requests ).
   ENDMETHOD.
 
@@ -300,7 +300,7 @@ CLASS ltc_overview IMPLEMENTATION.
   METHOD collision_on_fragment.
     comparer->comparison = VALUE #( ( comparison_row( iv_fragname = 'YCL_A                         M1' ) )
                                     ( comparison_row( iv_fragname = 'YCL_A                         M2' ) ) ).
-    collisions->collisions = VALUE #( ( request  = 'S4DK999999'
+    collisions->collisions = VALUE #( ( request  = 'DEVK999999'
                                         pgmid    = 'LIMU'
                                         object   = 'METH'
                                         obj_name = 'YCL_A                         M1' ) ).
@@ -309,7 +309,7 @@ CLASS ltc_overview IMPLEMENTATION.
                                                 io_collisions = collisions )->get( one_request( ) )-entries.
 
     cl_abap_unit_assert=>assert_equals(
-        exp = VALUE ycl_trm_tr_overview=>ty_t_trkorr( ( 'S4DK999999' ) )
+        exp = VALUE ycl_trm_tr_overview=>ty_t_trkorr( ( 'DEVK999999' ) )
         act = lt_entries[ fragname = 'YCL_A                         M1' ]-collisions ).
     cl_abap_unit_assert=>assert_initial( lt_entries[ fragname = 'YCL_A                         M2' ]-collisions ).
     cl_abap_unit_assert=>assert_true(
@@ -322,7 +322,7 @@ CLASS ltc_overview IMPLEMENTATION.
   METHOD collision_on_main_object.
     comparer->comparison = VALUE #( ( comparison_row( iv_fragname = 'YCL_A                         M1' ) )
                                     ( comparison_row( iv_fragname = 'YCL_A                         M2' ) ) ).
-    collisions->collisions = VALUE #( ( request  = 'S4DK999999'
+    collisions->collisions = VALUE #( ( request  = 'DEVK999999'
                                         pgmid    = 'R3TR'
                                         object   = 'CLAS'
                                         obj_name = 'YCL_A' ) ).
@@ -331,7 +331,7 @@ CLASS ltc_overview IMPLEMENTATION.
                                                 io_collisions = collisions )->get( one_request( ) )-entries.
 
     LOOP AT lt_entries INTO DATA(ls_entry).
-      cl_abap_unit_assert=>assert_equals( exp = VALUE ycl_trm_tr_overview=>ty_t_trkorr( ( 'S4DK999999' ) )
+      cl_abap_unit_assert=>assert_equals( exp = VALUE ycl_trm_tr_overview=>ty_t_trkorr( ( 'DEVK999999' ) )
                                           act = ls_entry-collisions ).
     ENDLOOP.
   ENDMETHOD.
@@ -341,7 +341,7 @@ CLASS ltc_overview IMPLEMENTATION.
     NEW ycl_trm_tr_overview( io_collisions = collisions )->get( one_request( ) ).
 
     cl_abap_unit_assert=>assert_equals(
-        exp = VALUE yif_trm_get_obj_w_collisions=>ty_r_transport_request( ( sign = 'I' option = 'EQ' low = 'S4DK000001' ) )
+        exp = VALUE yif_trm_get_obj_w_collisions=>ty_r_transport_request( ( sign = 'I' option = 'EQ' low = 'DEVK900001' ) )
         act = collisions->received_range ).
   ENDMETHOD.
 
@@ -349,10 +349,10 @@ CLASS ltc_overview IMPLEMENTATION.
   METHOD explicit_excluded_requests.
     NEW ycl_trm_tr_overview( io_collisions = collisions )->get(
         it_transport_request = one_request( )
-        ir_excluded_requests = VALUE #( ( sign = 'I' option = 'CP' low = 'S4DK*' ) ) ).
+        ir_excluded_requests = VALUE #( ( sign = 'I' option = 'CP' low = 'DEVK*' ) ) ).
 
     cl_abap_unit_assert=>assert_equals(
-        exp = VALUE yif_trm_get_obj_w_collisions=>ty_r_transport_request( ( sign = 'I' option = 'CP' low = 'S4DK*' ) )
+        exp = VALUE yif_trm_get_obj_w_collisions=>ty_r_transport_request( ( sign = 'I' option = 'CP' low = 'DEVK*' ) )
         act = collisions->received_range ).
   ENDMETHOD.
 

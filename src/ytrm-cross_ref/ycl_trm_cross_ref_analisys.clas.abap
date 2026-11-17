@@ -34,6 +34,15 @@ CLASS ycl_trm_cross_ref_analisys DEFINITION
                 io_destination_system    TYPE REF TO yif_trm_xref_system     OPTIONAL.
 
   PRIVATE SECTION.
+    " Field of a table, structure or CDS; the signature changes if the field can have changed
+    TYPES: BEGIN OF ty_s_ddic_field,
+             name      TYPE string,
+             signature TYPE string,
+           END OF ty_s_ddic_field,
+           ty_t_ddic_fields TYPE SORTED TABLE OF ty_s_ddic_field WITH NON-UNIQUE KEY name.
+
+    CONSTANTS c_calculated_signature TYPE string VALUE `CALCULATED`.
+
     DATA ai_o_repository         TYPE REF TO yif_trm_xref_repository.
     DATA ai_o_source_system      TYPE REF TO yif_trm_xref_system.
     DATA ai_o_destination_system TYPE REF TO yif_trm_xref_system.
@@ -93,6 +102,44 @@ CLASS ycl_trm_cross_ref_analisys DEFINITION
     METHODS check_devc
       IMPORTING it_result        TYPE ycl_trm_cross_ref_analisys=>ty_t_result
       RETURNING VALUE(rt_result) TYPE ycl_trm_cross_ref_analisys=>ty_t_result.
+
+    "! Attributes (constants) of classes that exist in the destination: the used ones have to exist too
+    METHODS check_classes
+      IMPORTING it_result          TYPE ycl_trm_cross_ref_analisys=>ty_t_result
+                it_cross_reference TYPE ty_t_objs_ref_tab
+      RETURNING VALUE(rt_result)   TYPE ycl_trm_cross_ref_analisys=>ty_t_result.
+
+    "! Fields of tables, structures and CDS used by the objects of the request
+    METHODS check_ddic_fields
+      IMPORTING it_result          TYPE ycl_trm_cross_ref_analisys=>ty_t_result
+                it_cross_reference TYPE ty_t_objs_ref_tab
+      RETURNING VALUE(rt_result)   TYPE ycl_trm_cross_ref_analisys=>ty_t_result.
+
+    "! Fields of other CDS and tables read by the CDS of the request
+    METHODS check_cds_in_request
+      IMPORTING it_result        TYPE ycl_trm_cross_ref_analisys=>ty_t_result
+      RETURNING VALUE(rt_result) TYPE ycl_trm_cross_ref_analisys=>ty_t_result.
+
+    "! @parameter iv_fragment | DDLS for a CDS; TABL or TABD for a table or structure
+    METHODS ddic_fields
+      IMPORTING io_system        TYPE REF TO yif_trm_xref_system
+                iv_fragment      TYPE trobjtype
+                iv_name          TYPE trobj_name
+      RETURNING VALUE(rt_fields) TYPE ty_t_ddic_fields
+      RAISING   ycx_trm_cross_reference.
+
+    "! Severity and log of a request object that uses a reference (red is kept)
+    METHODS flag_user
+      IMPORTING iv_obj_type TYPE trobjtype
+                iv_obj_name TYPE trobj_name
+                iv_severity TYPE icon_d
+                iv_message  TYPE string
+      CHANGING  cs_result   TYPE yif_trm_cross_reference=>ty_s_result.
+
+    METHODS is_class_definition_in_request
+      IMPORTING iv_class_name        TYPE csequence
+                it_importing_objects TYPE ycl_trm_cross_ref_analisys=>ty_t_objects
+      RETURNING VALUE(rv_result)     TYPE abap_bool.
 
 ENDCLASS.
 
@@ -160,6 +207,14 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
     lt_result = check_cpub_cpro_cpri( it_result          = lt_result
                                       it_cross_reference = lt_cross_reference ).
 
+    lt_result = check_classes( it_result          = lt_result
+                               it_cross_reference = lt_cross_reference ).
+
+    lt_result = check_ddic_fields( it_result          = lt_result
+                                   it_cross_reference = lt_cross_reference ).
+
+    lt_result = check_cds_in_request( lt_result ).
+
 *------------------------------------------------
 * Return result
 *------------------------------------------------
@@ -180,6 +235,7 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
     ENDIF.
 
     rt_cross_reference = ai_o_repository->get_references( lt_objects ).
+    INSERT LINES OF ai_o_repository->get_used_components( lt_objects ) INTO TABLE rt_cross_reference.
 
     DELETE rt_cross_reference WHERE     ref_pgmid    IS INITIAL
                                     AND ref_obj_type IS INITIAL
@@ -346,6 +402,11 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
 
     LOOP AT it_cross_reference ASSIGNING FIELD-SYMBOL(<ls_cross_reference>).
 
+      " Used components of tables and CDS are only analysed with their table or CDS
+      IF <ls_cross_reference>-ref_obj_type = yif_trm_xref_repository=>c_used_component.
+        CONTINUE.
+      ENDIF.
+
       IF NOT ai_o_repository->has_own_pgmid( <ls_cross_reference>-ref_obj_type ).
         CONTINUE. " Is subobject...
       ENDIF.
@@ -468,6 +529,17 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
           <ls_reference_list>-status = yif_trm_cross_reference=>c_status-exist_in_destination.
         ELSE.
           <ls_reference_list>-status = yif_trm_cross_reference=>c_status-only_in_source.
+        ENDIF.
+        CONTINUE.
+      ENDIF.
+
+      IF     <ls_reference_list>-reference_fragid   = 'LIMU'
+         AND <ls_reference_list>-reference_fragment = 'METH'
+         AND ai_o_repository->is_abstract_method( <ls_reference_list>-reference_fragname ).
+        " An abstract method has no implementation: it travels with the class definition
+        IF is_class_definition_in_request( iv_class_name        = <ls_reference_list>-reference_fragname(30)
+                                           it_importing_objects = it_importing_objects ).
+          <ls_reference_list>-status = yif_trm_cross_reference=>c_status-also_in_transport_request.
         ENDIF.
         CONTINUE.
       ENDIF.
@@ -672,8 +744,10 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
 
       " Get interface reference
       CLEAR lt_interface_cross_reference.
-      LOOP AT it_cross_reference ASSIGNING FIELD-SYMBOL(<ls_cross_reference>) WHERE    ref_obj_name CP |{ <ls_result>-reference_fragname }~*|
-                                                                                    OR ref_obj_name  = <ls_result>-reference_fragname.
+      LOOP AT it_cross_reference ASSIGNING FIELD-SYMBOL(<ls_cross_reference>)
+           WHERE     (    ref_obj_name CP |{ <ls_result>-reference_fragname }~*|
+                       OR ref_obj_name  = <ls_result>-reference_fragname )
+                 AND ref_obj_type <> yif_trm_xref_repository=>c_used_component.
 
         IF NOT line_exists( <ls_result>-object_list[ name = <ls_cross_reference>-obj_name
                                                      type = <ls_cross_reference>-obj_type ] ).
@@ -682,6 +756,22 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
 
         INSERT <ls_cross_reference> INTO TABLE lt_interface_cross_reference.
 
+      ENDLOOP.
+
+      " Interface types are referenced only by their name (OT <type>): they are taken if the interface has a type with that name
+      TRY.
+          DATA(lt_descr_source_system) = CAST ycl_trm_cross_reference_obj( ai_o_factory->create( <ls_result> ) )->describe( ).
+        CATCH ycx_trm_cross_reference.
+          CLEAR lt_descr_source_system.
+      ENDTRY.
+
+      LOOP AT it_cross_reference ASSIGNING <ls_cross_reference> WHERE ref_obj_type = 'OT'.
+        IF     line_exists( <ls_result>-object_list[ name = <ls_cross_reference>-obj_name
+                                                     type = <ls_cross_reference>-obj_type ] )
+           AND line_exists( lt_descr_source_system[ sub_object_type = 'OT'
+                                                    sub_object_name = <ls_cross_reference>-ref_obj_name ] ).
+          INSERT <ls_cross_reference> INTO TABLE lt_interface_cross_reference.
+        ENDIF.
       ENDLOOP.
 
       " Las referencias a la propia interfaz no las analizamos puesto que la interfaz existe en destino y no habra problema en crear una referencia
@@ -710,6 +800,34 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
           DATA(lv_interface_ref_obj_name) = <ls_interface_cross_reference>-ref_obj_name.
           REPLACE ALL OCCURRENCES OF |{ <ls_result>-reference_fragname }~| IN lv_interface_ref_obj_name WITH space.
 
+          " Caso de un tipo (estructura): puede haber cambiado y no sabemos qué componentes se usan
+          IF     <ls_interface_cross_reference>-ref_obj_type = 'OT'
+             AND line_exists( lt_descr_destination_system[ sub_object_type = 'OT'
+                                                           sub_object_name = lv_interface_ref_obj_name ] ).
+
+            IF   VALUE string( lt_descr_source_system[ sub_object_type = 'OT'
+                                                       sub_object_name = lv_interface_ref_obj_name ]-source_code OPTIONAL )
+               = lt_descr_destination_system[ sub_object_type = 'OT'
+                                              sub_object_name = lv_interface_ref_obj_name ]-source_code.
+              CONTINUE.
+            ENDIF.
+
+            IF <ls_object_list>-severity <> icon_led_red.
+              <ls_object_list>-severity = icon_led_yellow.
+            ENDIF.
+            IF <ls_object_list>-logger IS NOT BOUND.
+              <ls_object_list>-logger = ycl_trm_logger=>new( ).
+            ENDIF.
+            <ls_object_list>-logger->add_text(
+                im_type = 'W'
+                im_text = |{ <ls_interface_cross_reference>-ref_obj_type } { <ls_interface_cross_reference>-ref_obj_name } must be reviewed| ).
+
+            <ls_result>-status = COND #( WHEN <ls_result>-status = yif_trm_cross_reference=>c_status-different
+                                         THEN yif_trm_cross_reference=>c_status-different
+                                         ELSE yif_trm_cross_reference=>c_status-different_in_destination ).
+            CONTINUE.
+          ENDIF.
+
           IF line_exists( lt_descr_destination_system[ sub_object_type = <ls_interface_cross_reference>-ref_obj_type
                                                        sub_object_name = lv_interface_ref_obj_name ] ).
             CONTINUE.
@@ -725,8 +843,9 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
           " En caso de que haya diferencias entre los campos de la estructura de la constante, marcamos para que revise el usuario si realmente se está usando
           IF <ls_interface_cross_reference>-ref_obj_type = 'ATRB'.
 
-            " Si no existe en el sistema destinto...
-            LOOP AT lt_intf_comparison TRANSPORTING NO FIELDS WHERE type = 'ATRB' AND name CP |{ lv_interface_ref_obj_name }*|.
+            " Si no existe en el sistema destinto (ni ninguno de sus campos, si es una estructura)...
+            LOOP AT lt_descr_destination_system TRANSPORTING NO FIELDS
+                 WHERE sub_object_type = 'ATRB' AND sub_object_name CP |{ lv_interface_ref_obj_name }-*|.
               EXIT.
             ENDLOOP.
             IF sy-subrc <> 0.
@@ -844,6 +963,263 @@ CLASS ycl_trm_cross_ref_analisys IMPLEMENTATION.
       ENDIF.
 
     ENDLOOP.
+  ENDMETHOD.
+
+  METHOD check_classes.
+    rt_result = it_result.
+
+    LOOP AT rt_result ASSIGNING FIELD-SYMBOL(<ls_result>) WHERE     reference_fragid   = 'R3TR'
+                                                                AND reference_fragment = 'CLAS'
+                                                                AND status             = yif_trm_cross_reference=>c_status-exist_in_destination.
+
+      " Los atributos usados llegan como ATRB <clase>~<atributo>, sin pgmid propio
+      DATA(lt_used_attributes) = VALUE ty_t_objs_ref_tab(
+          FOR ls_cross_reference IN it_cross_reference
+          WHERE (     ref_obj_type  = 'ATRB'
+                  AND ref_obj_name CP |{ <ls_result>-reference_fragname }~*| )
+          ( ls_cross_reference ) ).
+      IF lt_used_attributes IS INITIAL.
+        CONTINUE.
+      ENDIF.
+
+      TRY.
+          DATA(lt_descr_destination_system) = ai_o_destination_system->describe(
+                                                  CONV #( <ls_result>-reference_fragname ) ).
+        CATCH ycx_trm_cross_reference.
+          CONTINUE.
+      ENDTRY.
+
+      LOOP AT lt_used_attributes INTO DATA(ls_used_attribute).
+        DATA(lv_attribute) = substring_after( val = ls_used_attribute-ref_obj_name
+                                              sub = '~' ).
+        IF line_exists( lt_descr_destination_system[ sub_object_type = 'ATRB'
+                                                     sub_object_name = lv_attribute ] ).
+          CONTINUE.
+        ENDIF.
+
+        LOOP AT <ls_result>-object_list ASSIGNING FIELD-SYMBOL(<ls_object_list>)
+             WHERE     name = ls_used_attribute-obj_name
+                   AND type = ls_used_attribute-obj_type.
+          <ls_object_list>-severity = icon_led_red.
+          IF <ls_object_list>-logger IS NOT BOUND.
+            <ls_object_list>-logger = ycl_trm_logger=>new( ).
+          ENDIF.
+          <ls_object_list>-logger->add_text( |ATRB { ls_used_attribute-ref_obj_name } not exists in destination| ).
+
+          <ls_result>-status = yif_trm_cross_reference=>c_status-different.
+        ENDLOOP.
+      ENDLOOP.
+
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD check_ddic_fields.
+    rt_result = it_result.
+
+    LOOP AT rt_result ASSIGNING FIELD-SYMBOL(<ls_result>)
+         WHERE     status = yif_trm_cross_reference=>c_status-different_in_destination
+               AND (    reference_fragment = 'DDLS'
+                     OR reference_fragment = 'TABL'
+                     OR reference_fragment = 'TABD' ).
+
+      DATA(lt_used_components) = VALUE ty_t_objs_ref_tab(
+          FOR ls_cross_reference IN it_cross_reference
+          WHERE (     ref_obj_type  = yif_trm_xref_repository=>c_used_component
+                  AND ref_obj_name CP |{ <ls_result>-reference_fragname }~*| )
+          ( ls_cross_reference ) ).
+      LOOP AT lt_used_components INTO DATA(ls_candidate).
+        IF NOT line_exists( <ls_result>-object_list[ type = ls_candidate-obj_type
+                                                     name = ls_candidate-obj_name ] ).
+          DELETE lt_used_components.
+        ENDIF.
+      ENDLOOP.
+      IF lt_used_components IS INITIAL.
+        CONTINUE.
+      ENDIF.
+
+      TRY.
+          DATA(lt_source_fields) = ddic_fields( io_system   = ai_o_source_system
+                                                iv_fragment = <ls_result>-reference_fragment
+                                                iv_name     = <ls_result>-reference_fragname ).
+          DATA(lt_destination_fields) = ddic_fields( io_system   = ai_o_destination_system
+                                                     iv_fragment = <ls_result>-reference_fragment
+                                                     iv_name     = <ls_result>-reference_fragname ).
+        CATCH ycx_trm_cross_reference.
+          CONTINUE.
+      ENDTRY.
+
+      LOOP AT lt_used_components INTO DATA(ls_used_component).
+        DATA(lv_component) = to_upper( substring_after( val = ls_used_component-ref_obj_name
+                                                        sub = '~' ) ).
+
+        ASSIGN lt_source_fields[ name = lv_component ] TO FIELD-SYMBOL(<ls_source_field>) ELSE UNASSIGN.
+        ASSIGN lt_destination_fields[ name = lv_component ] TO FIELD-SYMBOL(<ls_destination_field>) ELSE UNASSIGN.
+
+        " Associations, parameters or elements not described cannot be compared
+        IF <ls_source_field> IS NOT ASSIGNED.
+          flag_user( EXPORTING iv_obj_type = ls_used_component-obj_type
+                               iv_obj_name = ls_used_component-obj_name
+                               iv_severity = icon_led_yellow
+                               iv_message  = |{ lv_component } cannot be verified|
+                     CHANGING  cs_result   = <ls_result> ).
+        ELSEIF <ls_destination_field> IS NOT ASSIGNED.
+          flag_user( EXPORTING iv_obj_type = ls_used_component-obj_type
+                               iv_obj_name = ls_used_component-obj_name
+                               iv_severity = icon_led_red
+                               iv_message  = |{ lv_component } not exists in destination|
+                     CHANGING  cs_result   = <ls_result> ).
+        ELSEIF    <ls_source_field>-signature  = c_calculated_signature
+               OR <ls_source_field>-signature <> <ls_destination_field>-signature.
+          flag_user( EXPORTING iv_obj_type = ls_used_component-obj_type
+                               iv_obj_name = ls_used_component-obj_name
+                               iv_severity = icon_led_yellow
+                               iv_message  = |{ lv_component } must be reviewed|
+                     CHANGING  cs_result   = <ls_result> ).
+        ELSE.
+          flag_user( EXPORTING iv_obj_type = ls_used_component-obj_type
+                               iv_obj_name = ls_used_component-obj_name
+                               iv_severity = icon_led_green
+                               iv_message  = ||
+                     CHANGING  cs_result   = <ls_result> ).
+        ENDIF.
+      ENDLOOP.
+
+      " The navigation index does not keep the use of CDS parameters: they cannot be compared
+      IF     <ls_result>-reference_fragment = 'DDLS'
+         AND ai_o_repository->has_cds_parameters( <ls_result>-reference_fragname ).
+        LOOP AT lt_used_components INTO ls_used_component.
+          flag_user( EXPORTING iv_obj_type = ls_used_component-obj_type
+                               iv_obj_name = ls_used_component-obj_name
+                               iv_severity = icon_led_yellow
+                               iv_message  = |Parameters of { <ls_result>-reference_fragname } cannot be verified|
+                     CHANGING  cs_result   = <ls_result> ).
+        ENDLOOP.
+      ENDIF.
+
+      <ls_result>-status = COND #( WHEN line_exists( <ls_result>-object_list[ severity = icon_led_red ] )
+                                   THEN yif_trm_cross_reference=>c_status-different
+                                   WHEN line_exists( <ls_result>-object_list[ severity = icon_led_yellow ] )
+                                   THEN yif_trm_cross_reference=>c_status-different_in_destination
+                                   ELSE yif_trm_cross_reference=>c_status-different_but_not_relevant ).
+
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD check_cds_in_request.
+    DATA lv_base_fragment TYPE trobjtype.
+
+    rt_result = it_result.
+
+    LOOP AT ai_t_order_fragments INTO DATA(ls_cds) WHERE pgmid = 'R3TR' AND obj_type = 'DDLS'.
+
+      TRY.
+          DATA(lt_elements) = ai_o_source_system->describe_cds( CONV #( ls_cds-obj_name ) )-fields.
+        CATCH ycx_trm_cross_reference.
+          CONTINUE.
+      ENDTRY.
+
+      LOOP AT lt_elements INTO DATA(ls_element) WHERE base_object IS NOT INITIAL AND base_field IS NOT INITIAL.
+        DATA(lv_base_object) = CONV trobj_name( to_upper( ls_element-base_object ) ).
+        DATA(lv_base_field) = to_upper( ls_element-base_field ).
+
+        IF    line_exists( ai_t_order_fragments[ pgmid = 'R3TR' obj_type = 'DDLS' obj_name = lv_base_object ] )
+           OR line_exists( ai_t_order_fragments[ pgmid = 'R3TR' obj_type = 'TABL' obj_name = lv_base_object ] ).
+          CONTINUE.
+        ENDIF.
+
+        " The base object can be a CDS or a table; if it does not exist in the destination, its own reference is red
+        lv_base_fragment = 'DDLS'.
+        TRY.
+            DATA(lt_base_fields) = ddic_fields( io_system   = ai_o_destination_system
+                                                iv_fragment = lv_base_fragment
+                                                iv_name     = lv_base_object ).
+          CATCH ycx_trm_cross_reference.
+            lv_base_fragment = 'TABD'.
+            TRY.
+                lt_base_fields = ddic_fields( io_system   = ai_o_destination_system
+                                              iv_fragment = lv_base_fragment
+                                              iv_name     = lv_base_object ).
+              CATCH ycx_trm_cross_reference.
+                CONTINUE.
+            ENDTRY.
+        ENDTRY.
+
+        IF line_exists( lt_base_fields[ name = lv_base_field ] ).
+          CONTINUE.
+        ENDIF.
+
+        ASSIGN rt_result[ reference_fragment = lv_base_fragment
+                          reference_fragname = lv_base_object ] TO FIELD-SYMBOL(<ls_base>) ELSE UNASSIGN.
+        IF <ls_base> IS NOT ASSIGNED AND lv_base_fragment = 'TABD'.
+          ASSIGN rt_result[ reference_fragment = 'TABL'
+                            reference_fragname = lv_base_object ] TO <ls_base> ELSE UNASSIGN.
+        ENDIF.
+        IF <ls_base> IS NOT ASSIGNED.
+          INSERT VALUE #( reference_fragid   = COND #( WHEN lv_base_fragment = 'DDLS' THEN 'R3TR' ELSE 'LIMU' )
+                          reference_fragment = lv_base_fragment
+                          reference_fragname = lv_base_object ) INTO TABLE rt_result ASSIGNING <ls_base>.
+        ENDIF.
+
+        IF NOT line_exists( <ls_base>-object_list[ type = ls_cds-obj_type name = ls_cds-obj_name ] ).
+          INSERT VALUE #( pgmid = ls_cds-pgmid type = ls_cds-obj_type name = ls_cds-obj_name )
+                 INTO TABLE <ls_base>-object_list.
+        ENDIF.
+
+        flag_user( EXPORTING iv_obj_type = ls_cds-obj_type
+                             iv_obj_name = ls_cds-obj_name
+                             iv_severity = icon_led_red
+                             iv_message  = |{ to_upper( ls_element-element_name ) }: { lv_base_object }-{ lv_base_field } not exists in destination|
+                   CHANGING  cs_result   = <ls_base> ).
+        <ls_base>-status = yif_trm_cross_reference=>c_status-different.
+      ENDLOOP.
+
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD ddic_fields.
+    IF iv_fragment = 'DDLS'.
+      LOOP AT io_system->describe_cds( CONV #( iv_name ) )-fields INTO DATA(ls_cds_field).
+        INSERT VALUE #( name      = to_upper( ls_cds_field-element_name )
+                        signature = COND #( WHEN ls_cds_field-is_calculated = abap_true
+                                            THEN c_calculated_signature
+                                            ELSE to_upper( |{ ls_cds_field-base_object }-{ ls_cds_field-base_field }| ) ) )
+               INTO TABLE rt_fields.
+      ENDLOOP.
+      RETURN.
+    ENDIF.
+
+    LOOP AT io_system->describe_table( CONV #( iv_name ) )-fields INTO DATA(ls_table_field).
+      INSERT VALUE #( name      = to_upper( ls_table_field-fieldname )
+                      signature = |{ ls_table_field-rollname } { ls_table_field-datatype } { ls_table_field-leng } { ls_table_field-decimals }| )
+             INTO TABLE rt_fields.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD flag_user.
+    LOOP AT cs_result-object_list ASSIGNING FIELD-SYMBOL(<ls_user>) WHERE type = iv_obj_type AND name = iv_obj_name.
+      IF    <ls_user>-severity  = icon_led_red
+         OR ( <ls_user>-severity = icon_led_yellow AND iv_severity = icon_led_green ).
+        CONTINUE.
+      ENDIF.
+      <ls_user>-severity = iv_severity.
+
+      IF iv_message IS INITIAL.
+        CONTINUE.
+      ENDIF.
+      IF <ls_user>-logger IS NOT BOUND.
+        <ls_user>-logger = ycl_trm_logger=>new( ).
+      ENDIF.
+      <ls_user>-logger->add_text( im_type = COND #( WHEN iv_severity = icon_led_red THEN 'E' ELSE 'W' )
+                                  im_text = iv_message ).
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD is_class_definition_in_request.
+    rv_result = xsdbool(    line_exists( it_importing_objects[ pgmid = 'R3TR' obj_type = 'CLAS' obj_name = iv_class_name ] )
+                         OR line_exists( it_importing_objects[ pgmid = 'LIMU' obj_type = 'CLSD' obj_name = iv_class_name ] )
+                         OR line_exists( it_importing_objects[ pgmid = 'LIMU' obj_type = 'CPUB' obj_name = iv_class_name ] )
+                         OR line_exists( it_importing_objects[ pgmid = 'LIMU' obj_type = 'CPRO' obj_name = iv_class_name ] )
+                         OR line_exists( it_importing_objects[ pgmid = 'LIMU' obj_type = 'CPRI' obj_name = iv_class_name ] ) ).
   ENDMETHOD.
 
 ENDCLASS.

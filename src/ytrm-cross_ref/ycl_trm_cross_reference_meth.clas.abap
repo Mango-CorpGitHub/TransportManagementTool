@@ -26,9 +26,20 @@ CLASS ycl_trm_cross_reference_meth DEFINITION
              method       TYPE string,
            END OF ty_s_method.
 
+    "! Alias used by the reference, if the method was referenced through an alias
+    DATA alias_name TYPE string.
+
     METHODS split
       IMPORTING iv_fragname      TYPE trobj_name
       RETURNING VALUE(rs_method) TYPE ty_s_method.
+
+    "! A mandatory parameter is always passed by the callers
+    METHODS is_mandatory
+      IMPORTING is_parameter     TYPE vseoparam
+      RETURNING VALUE(rv_result) TYPE abap_bool.
+
+    METHODS alias_exists_in_destination
+      RETURNING VALUE(rv_result) TYPE abap_bool.
 
     METHODS constructor
       IMPORTING is_data               TYPE yif_trm_cross_reference=>ty_s_result
@@ -61,6 +72,7 @@ CLASS ycl_trm_cross_reference_meth IMPLEMENTATION.
     ENDIF.
 
     cross_reference_data-reference_fragname+30 = lv_method_name_if_alias.
+    alias_name = lv_method_name.
 
     " Genera error si el nombre del metodo tambien esta en la clase: ZCL_FI_ADI_NOMINAS_MAPPER_MX  MAPP = ZCL_FI_ADI_NOMINAS_ZIF_FI_ADI_FILE_MAPPER~MAPPER_MX  MAPP
 *    REPLACE lv_method_name IN cross_reference_data-reference_fragname WITH lv_method_name_if_alias.
@@ -80,7 +92,9 @@ CLASS ycl_trm_cross_reference_meth IMPLEMENTATION.
 
     rt_comparison = VALUE #( FOR ls_current_system_param IN lt_current_system_param
                              ( status   = yif_trm_cross_reference=>c_status-only_in_source
-                               severity = icon_led_yellow
+                               severity = COND #( WHEN is_mandatory( ls_current_system_param )
+                                                  THEN icon_led_red
+                                                  ELSE icon_led_yellow )
                                name     = ls_current_system_param-sconame
                                type     = ls_current_system_param-type ) ).
 
@@ -151,10 +165,32 @@ CLASS ycl_trm_cross_reference_meth IMPLEMENTATION.
   METHOD yif_trm_cross_reference~exists.
     TRY.
         describe( iv_in_destination = abap_true ).
-        RETURN abap_true.
       CATCH ycx_trm_cross_reference.
         RETURN abap_false.
     ENDTRY.
+
+    " Callers use the alias: it has to exist in the destination too
+    RETURN xsdbool( alias_name IS INITIAL OR alias_exists_in_destination( ) ).
+  ENDMETHOD.
+
+  METHOD alias_exists_in_destination.
+    TRY.
+        FINAL(lt_class_description) = destination_system->describe(
+                                          CONV #( cross_reference_data-reference_fragname(30) ) ).
+      CATCH ycx_trm_cross_reference.
+        RETURN abap_false.
+    ENDTRY.
+
+    rv_result = xsdbool( line_exists( lt_class_description[ sub_object_type       = 'METH'
+                                                             sub_object_name_alias = alias_name ] ) ).
+  ENDMETHOD.
+
+  METHOD is_mandatory.
+    rv_result = xsdbool(     is_parameter-pardecltyp <> '1'   " Exporting
+                         AND is_parameter-pardecltyp <> '3'   " Returning
+                         AND is_parameter-paroptionl  = abap_false
+                         AND is_parameter-parpreferd  = abap_false
+                         AND is_parameter-parvalue   IS INITIAL ).
   ENDMETHOD.
 
   METHOD yif_trm_cross_reference~navigate.

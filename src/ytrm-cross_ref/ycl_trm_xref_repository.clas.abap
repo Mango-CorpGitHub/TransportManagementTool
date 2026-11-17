@@ -16,6 +16,15 @@ CLASS ycl_trm_xref_repository DEFINITION
 
     METHODS load_namespaces.
 
+    METHODS is_interface
+      IMPORTING iv_name          TYPE seoclsname
+      RETURNING VALUE(rv_result) TYPE abap_bool.
+
+    "! Include with the source of an object of a request (method, class section, program)
+    METHODS object_include
+      IMPORTING is_object         TYPE cnvcdmccts_objects_set
+      RETURNING VALUE(rv_include) TYPE programm.
+
 ENDCLASS.
 
 
@@ -110,12 +119,125 @@ CLASS ycl_trm_xref_repository IMPLEMENTATION.
                  communication_failure = 3
                  OTHERS                = 4.
 
-    rt_methods = VALUE #( FOR ls_seomethod IN lt_seomethod
+    " Abstract methods have no implementation to check
+    rt_methods = VALUE #( FOR ls_seomethod IN lt_seomethod WHERE ( mtdabstrct IS INITIAL )
                           ( CONV #( ls_seomethod-cmpname ) ) ).
 
-    rt_methods = VALUE #( BASE rt_methods
-                          FOR ls_seoredef IN lt_seoredef
-                          ( CONV #( ls_seoredef-mtdname ) ) ).
+    " Rows of an implemented interface (ABSTRACT/FINAL METHODS) have the method name without the interface
+    LOOP AT lt_seoredef INTO DATA(ls_seoredef) WHERE mtdabstrct IS INITIAL.
+      INSERT COND #( WHEN is_interface( ls_seoredef-refclsname )
+                     THEN |{ ls_seoredef-refclsname }~{ ls_seoredef-mtdname }|
+                     ELSE CONV #( ls_seoredef-mtdname ) ) INTO TABLE rt_methods.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD yif_trm_xref_repository~is_abstract_method.
+    DATA lv_abstract TYPE seoredef-mtdabstrct.
+
+    DATA(lv_class_name) = CONV seoclsname( iv_method_name(30) ).
+    DATA(lv_method_name) = condense( CONV string( iv_method_name+30 ) ).
+
+    IF lv_method_name CS '~'.
+      SPLIT lv_method_name AT '~' INTO DATA(lv_interface_name) DATA(lv_interface_method_name).
+      SELECT SINGLE mtdabstrct FROM seoredef
+        WHERE clsname    = @lv_class_name
+          AND refclsname = @lv_interface_name
+          AND mtdname    = @lv_interface_method_name
+          AND version    = '1'
+        INTO @lv_abstract.
+    ELSE.
+      SELECT SINGLE mtdabstrct FROM seocompodf
+        WHERE clsname = @lv_class_name
+          AND cmpname = @lv_method_name
+          AND version = '1'
+        INTO @lv_abstract.
+    ENDIF.
+
+    rv_result = xsdbool( lv_abstract = abap_true ).
+  ENDMETHOD.
+
+  METHOD yif_trm_xref_repository~get_used_components.
+    TYPES: BEGIN OF ty_s_object_include,
+             include TYPE programm,
+             object  TYPE cnvcdmccts_objects_set,
+           END OF ty_s_object_include.
+
+    DATA lt_object_includes TYPE STANDARD TABLE OF ty_s_object_include WITH EMPTY KEY.
+
+    LOOP AT it_objects INTO DATA(ls_object).
+      DATA(lv_include) = object_include( ls_object ).
+      IF lv_include IS NOT INITIAL.
+        INSERT VALUE #( include = lv_include object = ls_object ) INTO TABLE lt_object_includes.
+      ENDIF.
+    ENDLOOP.
+    IF lt_object_includes IS INITIAL.
+      RETURN.
+    ENDIF.
+
+    " Index entries <entity>\TY:<field> and <entity>\AC:<association>
+    SELECT include, name FROM wbcrossgt
+      FOR ALL ENTRIES IN @lt_object_includes
+      WHERE include = @lt_object_includes-include
+        AND ( otype = 'TY' OR otype = 'AC' )
+      INTO TABLE @DATA(lt_index).
+
+    LOOP AT lt_index INTO DATA(ls_index).
+      SPLIT ls_index-name AT '\' INTO TABLE DATA(lt_parts).
+      IF lines( lt_parts ) <> 2.
+        CONTINUE.
+      ENDIF.
+
+      DATA(lv_component) = substring_after( val = lt_parts[ 2 ] sub = ':' ).
+
+      LOOP AT lt_object_includes INTO DATA(ls_object_include) WHERE include = ls_index-include.
+        INSERT VALUE #( pgmid        = ls_object_include-object-pgmid
+                        obj_type     = ls_object_include-object-obj_type
+                        obj_name     = ls_object_include-object-obj_name
+                        ref_obj_type = yif_trm_xref_repository=>c_used_component
+                        ref_obj_name = |{ lt_parts[ 1 ] }~{ lv_component }| ) INTO TABLE rt_references.
+      ENDLOOP.
+    ENDLOOP.
+
+    SORT rt_references.
+    DELETE ADJACENT DUPLICATES FROM rt_references.
+  ENDMETHOD.
+
+  METHOD yif_trm_xref_repository~has_cds_parameters.
+    SELECT SINGLE @abap_true FROM dd10b
+      WHERE strucobjn = @iv_cds_name
+        AND as4local  = 'A'
+      INTO @rv_result.
+  ENDMETHOD.
+
+  METHOD object_include.
+    CASE is_object-obj_type.
+      WHEN 'METH'.
+        cl_oo_classname_service=>get_method_include(
+          EXPORTING  mtdkey              = VALUE #( clsname = is_object-obj_name(30)
+                                                    cpdname = condense( CONV string( is_object-obj_name+30 ) ) )
+          RECEIVING  result              = rv_include
+          EXCEPTIONS class_not_existing  = 1
+                     method_not_existing = 2
+                     OTHERS              = 3 ).
+        IF sy-subrc <> 0.
+          CLEAR rv_include.
+        ENDIF.
+      WHEN 'CPUB'.
+        rv_include = cl_oo_classname_service=>get_pubsec_name( CONV #( is_object-obj_name ) ).
+      WHEN 'CPRO'.
+        rv_include = cl_oo_classname_service=>get_prosec_name( CONV #( is_object-obj_name ) ).
+      WHEN 'CPRI'.
+        rv_include = cl_oo_classname_service=>get_prisec_name( CONV #( is_object-obj_name ) ).
+      WHEN 'PROG' OR 'REPS'.
+        rv_include = is_object-obj_name.
+    ENDCASE.
+  ENDMETHOD.
+
+  METHOD is_interface.
+    SELECT SINGLE @abap_true FROM seoclass
+      WHERE clsname = @iv_name
+        AND clstype = '1'
+      INTO @rv_result.
   ENDMETHOD.
 
   METHOD yif_trm_xref_repository~has_own_pgmid.

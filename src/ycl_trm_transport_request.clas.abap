@@ -635,6 +635,7 @@ CLASS YCL_TRM_TRANSPORT_REQUEST IMPLEMENTATION.
     IF sy-subrc IS INITIAL.
 *      ai_o_log->info( |{ lv_trokrr } has been released| ).
     ELSE.
+      ai_o_log->add_from_system_variables( ).
       ai_o_log->warning( |{ lv_trokrr } could not be released| ).
       RETURN.
     ENDIF.

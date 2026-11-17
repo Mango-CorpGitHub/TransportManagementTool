@@ -167,6 +167,7 @@ CLASS lcl_alv_qry DEFINITION.
              cell_style      TYPE salv_t_int4_column,
              not_compared    TYPE abap_bool,
              lang            TYPE spras,
+             comparison      TYPE ycl_trm_tr_overview=>ty_e_comparison,
            END OF ty_s_alv_output,
            ty_t_alv_output TYPE STANDARD TABLE OF ty_s_alv_output WITH DEFAULT KEY.
 
@@ -241,7 +242,8 @@ CLASS lcl_alv_qry IMPLEMENTATION.
                         its_equal      = SWITCH #( ls_entry-comparison
                                                    WHEN ycl_trm_tr_overview=>c_comparison-equal        THEN icon_checked
                                                    WHEN ycl_trm_tr_overview=>c_comparison-not_compared THEN icon_question )
-                        not_compared   = xsdbool( ls_entry-comparison = ycl_trm_tr_overview=>c_comparison-not_compared ) ) ).
+                        not_compared   = xsdbool( ls_entry-comparison = ycl_trm_tr_overview=>c_comparison-not_compared )
+                        comparison     = ls_entry-comparison ) ).
 
     LOOP AT result ASSIGNING FIELD-SYMBOL(<ls_alv_output>).
 
@@ -485,6 +487,7 @@ CLASS lcl_app DEFINITION.
     DATA ai_go_to_stms           TYPE abap_bool VALUE abap_true.
     DATA at_transport_request    TYPE yif_trm_transport_request=>tab.
     DATA ai_s_collision_with     TYPE lif_selection_screen_data=>ty_s_collisions_with.
+    DATA quality_copy            TYPE REF TO ycl_trm_quality_copy.
 
     METHODS _display_collisions_alv
       IMPORTING it_collisions TYPE ty_t_collisions_output
@@ -597,6 +600,8 @@ CLASS lcl_app IMPLEMENTATION.
 
   METHOD run.
     " TODO: parameter IV_USER_REQUEST is never used (ABAP cleaner)
+
+    quality_copy = NEW #( go_log ).
 
     r_transport_request = _condense( ir_transport_request ).
 
@@ -1039,23 +1044,13 @@ CLASS lcl_app IMPLEMENTATION.
 
     LOOP AT alv_output ASSIGNING FIELD-SYMBOL(<ls_alv_output>).
 
-      <ls_alv_output>-checkbox = SWITCH #( ai_compare
-                                           WHEN abap_false THEN
-                                             abap_true
-                                           WHEN abap_true THEN
-                                             COND #( WHEN <ls_alv_output>-not_compared = abap_true THEN abap_true
-                                                     WHEN <ls_alv_output>-its_new = abap_true      THEN abap_true
-                                                     WHEN <ls_alv_output>-its_equal = abap_false   THEN abap_true
-                                                     ELSE                                               abap_false )
-                                           ELSE
-                                             abap_true ).
+      <ls_alv_output>-checkbox = quality_copy->is_selected_by_default( iv_compared   = ai_compare
+                                                                       iv_comparison = <ls_alv_output>-comparison ).
 
     ENDLOOP.
   ENDMETHOD.
 
   METHOD _alv_add_exclusive_productive.
-    DATA lt_users TYPE STANDARD TABLE OF sy-uname WITH DEFAULT KEY.
-
     IF rfc_compare_destination <> ycl_trm_transport_request=>get_customizing( )-rfc_to_productive.
       RETURN.
     ENDIF.
@@ -1089,22 +1084,14 @@ CLASS lcl_app IMPLEMENTATION.
       CATCH cx_salv_existing.
     ENDTRY.
 
-    lt_users = VALUE #( ( '00752978' )
-                        ( '00739817' )
-                        ( '03750198' )
-                        ( '00755532' )
-                     ).
-
-    IF line_exists( lt_users[ table_line = sy-uname ] ).
-      TRY.
-          lo_functions->add_function( name     = 'CLEAN'
-                                      tooltip  = 'Clean TRs'
-                                      text     = 'Clean TRs'
-                                      icon     = CONV #( icon_delete )
-                                      position = if_salv_c_function_position=>right_of_salv_functions ).
-        CATCH cx_salv_existing.
-      ENDTRY.
-    ENDIF.
+    TRY.
+        lo_functions->add_function( name     = 'CLEAN'
+                                    tooltip  = 'Clean TRs'
+                                    text     = 'Clean TRs'
+                                    icon     = CONV #( icon_delete )
+                                    position = if_salv_c_function_position=>right_of_salv_functions ).
+      CATCH cx_salv_existing.
+    ENDTRY.
 
     DATA(lo_checkbox_column) = CAST cl_salv_column_table( alv->get_columns( )->get_column( 'CHECKBOX' ) ).
     lo_checkbox_column->set_short_text( CONV #( 'Reviewed' ) ).
@@ -1209,95 +1196,26 @@ CLASS lcl_app IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD _create_and_release_toc.
-    TYPES lty_t_request_keys TYPE STANDARD TABLE OF e071k WITH DEFAULT KEY.
-
-    TYPES: BEGIN OF lty_s_freely_objects,
-             pgmid    TYPE e071-pgmid,
-             object   TYPE e071-object,
-             obj_name TYPE e071-obj_name,
-             objfunc  TYPE e071-objfunc,
-             keys     TYPE lty_t_request_keys,
-             activity TYPE e071-activity,
-             lang     TYPE e071-lang,
-           END OF lty_s_freely_objects,
-
-           lty_t_freely_objects TYPE STANDARD TABLE OF lty_s_freely_objects WITH DEFAULT KEY.
-
-    DATA lt_objects TYPE lty_t_freely_objects.
-
-*    " Los function groups tiene que ir enteros, sino pueden dan error al importar. Si se marca un solo objeto del FG, nos lo llevamos todo.
-
-    LOOP AT alv_output ASSIGNING FIELD-SYMBOL(<ls_alv_ouput>) WHERE     pgmid    = 'R3TR'
-                                                                    AND object   = 'FUGR'
-                                                                    AND checkbox = abap_true.
-
-      IF line_exists( lt_objects[ pgmid    = <ls_alv_ouput>-pgmid
-                                  object   = <ls_alv_ouput>-object
-                                  obj_name = <ls_alv_ouput>-obj_name ] ).
-        CONTINUE.
-      ENDIF.
-
-      io_log->info( |Function Group { <ls_alv_ouput>-obj_name } will be released completely'| ).
-
-      INSERT VALUE #( pgmid    = <ls_alv_ouput>-pgmid
-                      object   = <ls_alv_ouput>-object
-                      obj_name = <ls_alv_ouput>-obj_name ) INTO TABLE lt_objects.
-
-    ENDLOOP.
-
-    IF ai_compare = abap_true.
-      lt_objects = VALUE #( BASE lt_objects FOR ls_alv_output IN alv_output WHERE ( checkbox = abap_true )
-                            ( pgmid    = ls_alv_output-fragid
-                              object   = ls_alv_output-fragment
-                              obj_name = ls_alv_output-fragname
-                              objfunc  = ls_alv_output-objfunc
-                              keys     = ls_alv_output-keys
-                              activity = ls_alv_output-activity
-                              lang     = ls_alv_output-lang ) ).
-    ELSE.
-      lt_objects = VALUE #( BASE lt_objects FOR ls_alv_output IN alv_output WHERE ( checkbox = abap_true )
-                            ( pgmid    = ls_alv_output-pgmid
-                              object   = ls_alv_output-object
-                              obj_name = ls_alv_output-obj_name
-                              objfunc  = ls_alv_output-objfunc
-                              keys     = ls_alv_output-keys
-                              activity = ls_alv_output-activity
-                              lang     = ls_alv_output-lang ) ).
-    ENDIF.
+    FINAL(lt_copy_entries) = quality_copy->to_copy_entries(
+        it_selected = VALUE #( FOR ls_alv_output IN alv_output WHERE ( checkbox = abap_true )
+                               ( CORRESPONDING ycl_trm_tr_overview=>ty_s_entry( ls_alv_output ) ) )
+        iv_compared = ai_compare ).
 
     DATA(lv_release) = abap_true.
-*    DATA(lv_go_to_stms) = abap_true.
-    DATA(lv_description) = CONV as4text( |COPY - { tr_descr }| ).
+    DATA(lv_description) = quality_copy->get_default_description( at_transport_request[ 1 ] ).
 
     IF NOT _confirmation_popup( IMPORTING ex_releasing   = lv_release
                                           ex_description = lv_description
                                           ex_go_to_stms  = ai_go_to_stms ).
 
+      DATA(lv_released) = abap_false.
       TRY.
-          FINAL(lo_transport_request) = ycl_trm_transport_request=>create_request(
-              iv_req_desc        = lv_description
-              iv_req_type        = yif_trm_transport_request=>type-toc
-              iv_target          = ycl_trm_transport_request=>get_customizing( )-request_target_system_quality
-              im_o_parent_logger = io_log ).
-
-          lo_transport_request->lock( ).
-
-          lo_transport_request->add_objects(
-              im_t_e071  = CORRESPONDING #( lt_objects )
-              im_t_e071k = VALUE #( FOR custo_object IN lt_objects WHERE ( objfunc = yif_trm_tr_object=>function-customizing )
-                                    FOR keys IN custo_object-keys
-                                    ( keys ) ) ).
-
-          lo_transport_request->unlock( ).
-
-          IF lv_release = abap_true.
-
-            lo_transport_request->release( ).
-
-          ENDIF.
-
-        CATCH ycx_trm_transport_request.
-
+          lv_released = quality_copy->create( iv_description       = lv_description
+                                              it_transport_request = at_transport_request
+                                              it_entries           = CORRESPONDING #( lt_copy_entries )
+                                              iv_release           = lv_release )-released.
+        CATCH ycx_trm_transport_request ##NO_HANDLER.
+          " The error is already in the log, which is displayed below
       ENDTRY.
 
       FINAL(lv_log_has_errors) = io_log->has_errors( ).
@@ -1305,7 +1223,7 @@ CLASS lcl_app IMPLEMENTATION.
 
       IF     lv_log_has_errors = abap_false
          AND ai_go_to_stms     = abap_true
-         AND lv_release        = abap_true.
+         AND lv_released       = abap_true.
         CALL FUNCTION 'ABAP4_CALL_TRANSACTION' STARTING NEW TASK 'TEST'
           DESTINATION rfc_compare_destination
           EXPORTING tcode = 'STMS_IMPORT'.
@@ -1411,6 +1329,7 @@ CLASS lcl_app IMPLEMENTATION.
     CAST cl_salv_column_table( alv->get_columns( )->get_column( 'NOT_COMPARED' ) )->set_visible( abap_false ).
     CAST cl_salv_column_table( alv->get_columns( )->get_column( 'ACTIVITY' ) )->set_visible( abap_false ).
     CAST cl_salv_column_table( alv->get_columns( )->get_column( 'LANG' ) )->set_visible( abap_false ).
+    CAST cl_salv_column_table( alv->get_columns( )->get_column( 'COMPARISON' ) )->set_visible( abap_false ).
     alv->get_columns( )->set_cell_type_column( 'CELL_STYLE' ).
 
     FINAL(lo_functions) = alv->get_functions( ).

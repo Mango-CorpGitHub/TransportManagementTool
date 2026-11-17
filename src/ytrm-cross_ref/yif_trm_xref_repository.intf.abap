@@ -4,11 +4,26 @@ INTERFACE yif_trm_xref_repository
   TYPES ty_t_objects    TYPE STANDARD TABLE OF cnvcdmccts_objects_set WITH DEFAULT KEY.
   TYPES ty_t_references TYPE STANDARD TABLE OF cnvcdmccts_objs_ref WITH DEFAULT KEY.
 
+  "! Type of the references to components (fields, associations) used of tables, structures and
+  "! CDS: <entity>~<component>. It is not a real object type
+  CONSTANTS c_used_component TYPE trobjtype VALUE 'XFLD'.
+
   "! Fragments (sub-objects) and non versionable objects of the given objects
   METHODS get_fragments
     IMPORTING it_objects          TYPE ty_t_objects
     RETURNING VALUE(rt_fragments) TYPE ty_t_objects
     RAISING   ycx_trm_cross_reference.
+
+  "! Components (fields, associations) of tables, structures and CDS used by the given objects,
+  "! from the navigation index: type c_used_component, name <entity>~<component>
+  METHODS get_used_components
+    IMPORTING it_objects           TYPE ty_t_objects
+    RETURNING VALUE(rt_references) TYPE ty_t_references.
+
+  "! The CDS has parameters in the local system
+  METHODS has_cds_parameters
+    IMPORTING iv_cds_name      TYPE trobj_name
+    RETURNING VALUE(rv_result) TYPE abap_bool.
 
   "! Objects used by the given objects
   METHODS get_references
@@ -20,7 +35,7 @@ INTERFACE yif_trm_xref_repository
     IMPORTING it_methods        TYPE ty_t_objects
     RETURNING VALUE(rt_methods) TYPE ty_t_objects.
 
-  "! Methods and redefinitions of a class part (CPUB, CPRO, CPRI)
+  "! Implemented methods and redefinitions of a class part (CPUB, CPRO, CPRI); interface methods as interface~method
   METHODS get_class_part_methods
     IMPORTING iv_part           TYPE trobjtype
               iv_class_name     TYPE trobj_name
@@ -42,6 +57,12 @@ INTERFACE yif_trm_xref_repository
   METHODS method_exists
     IMPORTING iv_class_name    TYPE tmdir-classname
               iv_method_name   TYPE tmdir-methodname
+    RETURNING VALUE(rv_result) TYPE abap_bool.
+
+  "! Method without implementation (abstract): own method or interface method declared abstract
+  "! @parameter iv_method_name | LIMU METH name: class (30) + method or interface~method
+  METHODS is_abstract_method
+    IMPORTING iv_method_name   TYPE trobj_name
     RETURNING VALUE(rv_result) TYPE abap_bool.
 
 ENDINTERFACE.

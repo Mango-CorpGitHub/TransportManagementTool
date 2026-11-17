@@ -543,6 +543,7 @@ CLASS ycl_trm_cross_ref_describe_obj IMPLEMENTATION.
     DATA lt_seoparam    TYPE STANDARD TABLE OF vseoparam.
     DATA lt_seoexcep    TYPE STANDARD TABLE OF vseoexcep.
     DATA lt_seoredef    TYPE STANDARD TABLE OF seoredef.
+    DATA lt_seometarel  TYPE STANDARD TABLE OF seometarel.
 
     DATA(lv_cache_name) = |{ iv_cpub_cpro_cpri }-{ iv_object_name }|.
     TRY.
@@ -572,6 +573,7 @@ CLASS ycl_trm_cross_ref_describe_obj IMPLEMENTATION.
                  pvseoparam            = lt_seoparam
                  pvseoexcep            = lt_seoexcep
                  pseoredef             = lt_seoredef
+                 pseometarel           = lt_seometarel
       EXCEPTIONS no_version            = 1
                  system_failure        = 2
                  communication_failure = 3
@@ -603,17 +605,45 @@ CLASS ycl_trm_cross_ref_describe_obj IMPLEMENTATION.
 
       DATA(lt_refclsname_description) = describe( CONV #( <ls_seoredef>-refclsname ) ).
 
+      " Rows of an implemented interface (ABSTRACT/FINAL METHODS) have the method name without the interface
+      DATA(lv_method_name) = CONV trobj_name( <ls_seoredef>-mtdname ).
+      IF yif_trm_xref_system~object_exists( iv_pgmid    = 'R3TR'
+                                            iv_object   = 'INTF'
+                                            iv_obj_name = CONV #( <ls_seoredef>-refclsname ) ).
+        lv_method_name = |{ <ls_seoredef>-refclsname }~{ <ls_seoredef>-mtdname }|.
+      ENDIF.
+
       INSERT VALUE #(
           object_pgmid       = 'LIMU'
           object_type        = iv_cpub_cpro_cpri
           object_name        = lv_object_name
           sub_object_type    = 'METH'
-          sub_object_name    = <ls_seoredef>-mtdname
+          sub_object_name    = lv_method_name
           method_description = VALUE #( lt_refclsname_description[
                                             sub_object_name = <ls_seoredef>-mtdname ]-method_description OPTIONAL )
           source_code        = '' )
              INTO TABLE rt_description.
 
+    ENDLOOP.
+
+    " Components of the interfaces implemented in this part, named interface~component as in the class
+    LOOP AT lt_seometarel INTO DATA(ls_interface) WHERE reltype = '1'.
+      TRY.
+          DATA(lt_interface_description) = describe( CONV #( ls_interface-refclsname ) ).
+        CATCH ycx_trm_cross_reference.
+          CONTINUE.
+      ENDTRY.
+
+      LOOP AT lt_interface_description INTO DATA(ls_interface_component)
+           WHERE     sub_object_name_alias IS INITIAL
+                 AND (    sub_object_type = 'METH' OR sub_object_type = 'ATRB'
+                       OR sub_object_type = 'EVNT' OR sub_object_type = 'OT' ).
+        ls_interface_component-object_pgmid    = 'LIMU'.
+        ls_interface_component-object_type     = iv_cpub_cpro_cpri.
+        ls_interface_component-object_name     = lv_object_name.
+        ls_interface_component-sub_object_name = |{ ls_interface-refclsname }~{ ls_interface_component-sub_object_name }|.
+        INSERT ls_interface_component INTO TABLE rt_description.
+      ENDLOOP.
     ENDLOOP.
 
     " Atributos
