@@ -477,7 +477,7 @@ CLASS YCL_TRM_CROSS_REF_ANALISYS_ALV IMPLEMENTATION.
         build_field_comparison_alv(
             |{ ai_rfc_destination } - { is_alv_output-reference_fragment } - { is_alv_output-reference_fragname }| ).
 
-      CATCH cx_method_not_implemented.
+      CATCH ycx_trm_not_implemented.
 
         " Mostrar Not Supported
 

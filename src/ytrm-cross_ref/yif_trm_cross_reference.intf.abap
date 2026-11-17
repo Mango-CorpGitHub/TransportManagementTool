@@ -63,7 +63,7 @@ INTERFACE yif_trm_cross_reference
   "! The referenced object exists in the destination system
   METHODS exists
     RETURNING VALUE(rv_exists) TYPE abap_bool
-    RAISING   cx_method_not_implemented.
+    RAISING   ycx_trm_not_implemented.
 
   METHODS navigate
     RAISING ycx_trm_transport_request.
@@ -71,6 +71,6 @@ INTERFACE yif_trm_cross_reference
   "! Compares the referenced object in the local and the destination system
   METHODS compare
     RETURNING VALUE(rt_comparison) TYPE ty_t_comparison
-    RAISING   cx_method_not_implemented.
+    RAISING   ycx_trm_not_implemented.
 
 ENDINTERFACE.

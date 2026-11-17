@@ -40,11 +40,11 @@ CLASS ycl_trm_cross_ref IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD yif_trm_cross_reference~compare.
-    RAISE EXCEPTION NEW cx_method_not_implemented( ).
+    RAISE EXCEPTION NEW ycx_trm_not_implemented( ).
   ENDMETHOD.
 
   METHOD yif_trm_cross_reference~exists.
-    RAISE EXCEPTION NEW cx_method_not_implemented( ).
+    RAISE EXCEPTION NEW ycx_trm_not_implemented( ).
   ENDMETHOD.
 
   METHOD yif_trm_cross_reference~navigate.
